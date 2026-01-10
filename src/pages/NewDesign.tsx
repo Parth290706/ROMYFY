@@ -1,0 +1,208 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import StepRoomType from '@/components/design/StepRoomType';
+import StepUpload from '@/components/design/StepUpload';
+import StepStyle from '@/components/design/StepStyle';
+import StepBudget from '@/components/design/StepBudget';
+import StepProcessing from '@/components/design/StepProcessing';
+import DesignHeader from '@/components/design/DesignHeader';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+
+export interface DesignData {
+  roomType: string;
+  imageFile: File | null;
+  imagePreview: string;
+  styleMood: string;
+  styleType: string;
+  budget: string;
+}
+
+const NewDesign = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [designData, setDesignData] = useState<DesignData>({
+    roomType: '',
+    imageFile: null,
+    imagePreview: '',
+    styleMood: '',
+    styleType: '',
+    budget: '',
+  });
+
+  const totalSteps = 4;
+
+  const updateDesignData = (data: Partial<DesignData>) => {
+    setDesignData((prev) => ({ ...prev, ...data }));
+  };
+
+  const nextStep = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!user || !designData.imageFile) return;
+
+    setIsProcessing(true);
+
+    try {
+      // Upload original image to storage
+      const fileExt = designData.imageFile.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('room-images')
+        .upload(fileName, designData.imageFile);
+
+      if (uploadError) throw uploadError;
+
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('room-images')
+        .getPublicUrl(fileName);
+
+      // Create design record
+      const { data: design, error: insertError } = await supabase
+        .from('room_designs')
+        .insert({
+          user_id: user.id,
+          room_type: designData.roomType,
+          style_mood: designData.styleMood,
+          style_type: designData.styleType,
+          budget: designData.budget,
+          original_image_url: publicUrl,
+          status: 'processing',
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      // Call AI edge function
+      const { data: aiResult, error: aiError } = await supabase.functions.invoke('generate-design', {
+        body: {
+          designId: design.id,
+          imageUrl: publicUrl,
+          roomType: designData.roomType,
+          styleMood: designData.styleMood,
+          styleType: designData.styleType,
+          budget: designData.budget,
+        },
+      });
+
+      if (aiError) {
+        console.error('AI Error:', aiError);
+        // Still navigate to result, it will show pending status
+      }
+
+      toast({
+        title: 'Design created!',
+        description: 'Your AI-powered design is ready.',
+      });
+
+      navigate(`/design/${design.id}`);
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to create design. Please try again.',
+      });
+      setIsProcessing(false);
+    }
+  };
+
+  if (isProcessing) {
+    return <StepProcessing />;
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <DesignHeader currentStep={currentStep} totalSteps={totalSteps} onBack={() => navigate('/dashboard')} />
+
+      <main className="container mx-auto px-6 py-8">
+        <AnimatePresence mode="wait">
+          {currentStep === 1 && (
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <StepRoomType
+                selected={designData.roomType}
+                onSelect={(roomType) => updateDesignData({ roomType })}
+                onNext={nextStep}
+              />
+            </motion.div>
+          )}
+
+          {currentStep === 2 && (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <StepUpload
+                imagePreview={designData.imagePreview}
+                onUpload={(file, preview) => updateDesignData({ imageFile: file, imagePreview: preview })}
+                onNext={nextStep}
+                onBack={prevStep}
+              />
+            </motion.div>
+          )}
+
+          {currentStep === 3 && (
+            <motion.div
+              key="step3"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <StepStyle
+                selectedMood={designData.styleMood}
+                selectedType={designData.styleType}
+                onSelectMood={(mood) => updateDesignData({ styleMood: mood })}
+                onSelectType={(type) => updateDesignData({ styleType: type })}
+                onNext={nextStep}
+                onBack={prevStep}
+              />
+            </motion.div>
+          )}
+
+          {currentStep === 4 && (
+            <motion.div
+              key="step4"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <StepBudget
+                selected={designData.budget}
+                onSelect={(budget) => updateDesignData({ budget })}
+                onSubmit={handleSubmit}
+                onBack={prevStep}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+    </div>
+  );
+};
+
+export default NewDesign;
