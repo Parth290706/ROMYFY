@@ -1,10 +1,21 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://esm.sh/zod@3.25.76";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const RequestSchema = z.object({
+  designId: z.string().uuid("Invalid design ID format"),
+  imageUrl: z.string().url("Invalid image URL").max(2000, "URL too long"),
+  roomType: z.string().min(1, "Room type required").max(50, "Room type too long"),
+  styleMood: z.string().min(1, "Style mood required").max(50, "Style mood too long"),
+  styleType: z.string().min(1, "Style type required").max(50, "Style type too long"),
+  budget: z.enum(["low", "medium", "high"], { errorMap: () => ({ message: "Invalid budget option" }) }),
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -12,15 +23,74 @@ serve(async (req) => {
   }
 
   try {
-    const { designId, imageUrl, roomType, styleMood, styleType, budget } = await req.json();
-    
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error("Supabase configuration missing");
 
-    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+    // Authentication check
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Create authenticated client to verify user
+    const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate input
+    const body = await req.json();
+    const validationResult = RequestSchema.safeParse(body);
+    if (!validationResult.success) {
+      return new Response(JSON.stringify({ 
+        error: "Invalid input", 
+        details: validationResult.error.errors.map(e => e.message).join(", ")
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { designId, imageUrl, roomType, styleMood, styleType, budget } = validationResult.data;
+
+    // Verify ownership of the design
+    const { data: design, error: designError } = await supabaseAuth
+      .from("room_designs")
+      .select("user_id")
+      .eq("id", designId)
+      .single();
+
+    if (designError || !design) {
+      return new Response(JSON.stringify({ error: "Design not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (design.user_id !== user.id) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Use service role client for admin operations (after ownership verified)
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY!);
 
     // Generate text suggestions
     const suggestionsResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
