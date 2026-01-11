@@ -106,8 +106,7 @@ const NewDesign = () => {
       });
 
       if (aiError) {
-        console.error('AI Error:', aiError);
-        // Still navigate to result, it will show pending status
+        // Silent fail - still navigate to result, it will show pending status
       }
 
       toast({
@@ -116,8 +115,8 @@ const NewDesign = () => {
       });
 
       navigate(`/design/${design.id}`);
-    } catch (error) {
-      console.error('Error:', error);
+    } catch {
+      // Silent fail - show user-friendly error without logging sensitive details
       toast({
         variant: 'destructive',
         title: 'Error',

@@ -96,7 +96,7 @@ const DesignResult = () => {
       .single();
 
     if (error) {
-      console.error('Error fetching design:', error);
+      // Silent fail - redirect to dashboard without logging sensitive info
       navigate('/dashboard');
     } else {
       setDesign(data);
