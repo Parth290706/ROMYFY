@@ -148,64 +148,64 @@ const DesignResult = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-card border-b sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
-              <ArrowLeft className="h-5 w-5" />
+        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')} className="h-8 w-8 sm:h-10 sm:w-10">
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
             <Link to="/dashboard" className="flex items-center gap-2">
-              <div className="h-10 w-10 rounded-xl roomyfy-gradient flex items-center justify-center">
-                <Home className="h-5 w-5 text-primary-foreground" />
+              <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl roomyfy-gradient flex items-center justify-center">
+                <Home className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-foreground">ROOMYFY</span>
+              <span className="text-lg sm:text-xl font-bold text-foreground hidden sm:inline">ROOMYFY</span>
             </Link>
           </div>
           {signedUrls.generatedSignedUrl && (
-            <Button onClick={handleDownload} className="roomyfy-gradient">
-              <Download className="mr-2 h-4 w-4" />
-              Download
+            <Button onClick={handleDownload} className="roomyfy-gradient text-sm sm:text-base px-3 sm:px-4">
+              <Download className="mr-1 sm:mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Download</span>
             </Button>
           )}
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
           {/* Design Info */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2 capitalize">{design.room_type.replace('-', ' ')} Design</h1>
-            <p className="text-muted-foreground capitalize">
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2 capitalize">{design.room_type.replace('-', ' ')} Design</h1>
+            <p className="text-sm sm:text-base text-muted-foreground capitalize">
               {design.style_mood} • {design.style_type} • {design.budget} Budget
             </p>
           </div>
 
           {isProcessing ? (
             /* Processing State */
-            <Card className="mb-8">
-              <CardContent className="p-12 text-center">
+            <Card className="mb-6 sm:mb-8">
+              <CardContent className="p-8 sm:p-12 text-center">
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                  className="w-20 h-20 mx-auto mb-6 rounded-2xl roomyfy-gradient flex items-center justify-center"
+                  className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-xl sm:rounded-2xl roomyfy-gradient flex items-center justify-center"
                 >
-                  <Clock className="h-10 w-10 text-primary-foreground" />
+                  <Clock className="h-8 w-8 sm:h-10 sm:w-10 text-primary-foreground" />
                 </motion.div>
-                <h2 className="text-xl font-semibold mb-2">Design in Progress</h2>
-                <p className="text-muted-foreground">
+                <h2 className="text-lg sm:text-xl font-semibold mb-2">Design in Progress</h2>
+                <p className="text-sm sm:text-base text-muted-foreground">
                   Our AI is working on your design. This may take a minute...
                 </p>
               </CardContent>
             </Card>
           ) : (
             /* Before/After Comparison */
-            <div className="grid lg:grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
               <Card className="overflow-hidden roomyfy-card-shadow">
                 <CardContent className="p-0">
-                  <div className="p-4 bg-muted/50 flex items-center justify-between">
-                    <h3 className="font-semibold">Before</h3>
+                  <div className="p-3 sm:p-4 bg-muted/50 flex items-center justify-between">
+                    <h3 className="font-semibold text-sm sm:text-base">Before</h3>
                   </div>
                   <div className="aspect-[4/3]">
                     {signedUrls.originalSignedUrl ? (
@@ -216,7 +216,7 @@ const DesignResult = () => {
                       />
                     ) : (
                       <div className="w-full h-full bg-muted flex items-center justify-center">
-                        <p className="text-muted-foreground">Loading image...</p>
+                        <p className="text-sm text-muted-foreground">Loading image...</p>
                       </div>
                     )}
                   </div>
@@ -225,9 +225,9 @@ const DesignResult = () => {
 
               <Card className="overflow-hidden roomyfy-card-shadow">
                 <CardContent className="p-0">
-                  <div className="p-4 bg-primary/10 flex items-center justify-between">
-                    <h3 className="font-semibold text-primary">After</h3>
-                    <Sparkles className="h-5 w-5 text-primary" />
+                  <div className="p-3 sm:p-4 bg-primary/10 flex items-center justify-between">
+                    <h3 className="font-semibold text-sm sm:text-base text-primary">After</h3>
+                    <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   </div>
                   <div className="aspect-[4/3]">
                     {signedUrls.generatedSignedUrl ? (
@@ -238,7 +238,7 @@ const DesignResult = () => {
                       />
                     ) : (
                       <div className="w-full h-full bg-muted flex items-center justify-center">
-                        <p className="text-muted-foreground">Image generation failed</p>
+                        <p className="text-sm text-muted-foreground">Image generation failed</p>
                       </div>
                     )}
                   </div>
@@ -250,12 +250,12 @@ const DesignResult = () => {
           {/* AI Suggestions */}
           {design.ai_suggestions && (
             <Card className="roomyfy-card-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  <h2 className="text-xl font-semibold">AI Design Suggestions</h2>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                  <h2 className="text-lg sm:text-xl font-semibold">AI Design Suggestions</h2>
                 </div>
-                <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-wrap">
+                <div className="prose prose-sm max-w-none text-sm sm:text-base text-muted-foreground whitespace-pre-wrap">
                   {design.ai_suggestions}
                 </div>
               </CardContent>
