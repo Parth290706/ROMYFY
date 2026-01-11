@@ -11,7 +11,7 @@ const Landing = () => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border/50">
         <nav className="container mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
-            <img src={logo} alt="ROOMYFY Logo" className="h-12 w-12 rounded-full" />
+            <img src={logo} alt="ROOMYFY Logo" className="h-12 w-12 rounded-full" width={48} height={48} loading="eager" decoding="async" />
             <span className="text-xl font-bold roomyfy-text-gradient">ROOMYFY</span>
           </Link>
           <div className="flex items-center gap-4">
@@ -94,6 +94,10 @@ const Landing = () => {
                       src={logo} 
                       alt="ROOMYFY" 
                       className="w-40 h-40 mx-auto mb-6 roomyfy-glow rounded-full"
+                      width={160}
+                      height={160}
+                      loading="lazy"
+                      decoding="async"
                       animate={{ 
                         boxShadow: [
                           "0 0 30px -5px hsl(35 75% 55% / 0.4)",
@@ -221,7 +225,7 @@ const Landing = () => {
       <footer className="py-8 border-t border-border/50">
         <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="ROOMYFY" className="h-8 w-8 rounded-full" />
+            <img src={logo} alt="ROOMYFY" className="h-8 w-8 rounded-full" width={32} height={32} loading="lazy" decoding="async" />
             <span className="text-sm text-muted-foreground">© 2024 ROOMYFY. All rights reserved.</span>
           </div>
           <p className="text-sm roomyfy-text-gradient font-medium">Design Your Room in Seconds</p>
