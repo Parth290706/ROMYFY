@@ -14,6 +14,7 @@ const RequestSchema = z.object({
   roomType: z.string().min(1, "Room type required").max(50, "Room type too long"),
   styleMood: z.string().min(1, "Style mood required").max(50, "Style mood too long"),
   styleType: z.string().min(1, "Style type required").max(50, "Style type too long"),
+  customPrompt: z.string().max(500, "Custom prompt too long").optional(),
   budget: z.enum(["low", "medium", "high"], { errorMap: () => ({ message: "Invalid budget option" }) }),
 });
 
@@ -66,7 +67,12 @@ serve(async (req) => {
       });
     }
 
-    const { designId, imageUrl, roomType, styleMood, styleType, budget } = validationResult.data;
+    const { designId, imageUrl, roomType, styleMood, styleType, customPrompt, budget } = validationResult.data;
+    
+    // Build style description - use custom prompt if provided, otherwise use predefined style
+    const styleDescription = styleType === 'custom' && customPrompt 
+      ? customPrompt 
+      : `${styleMood} mood with ${styleType} design style`;
 
     // Verify ownership of the design
     const { data: design, error: designError } = await supabaseAuth
@@ -125,7 +131,7 @@ serve(async (req) => {
           },
           {
             role: "user",
-            content: `I have a ${roomType.replace('-', ' ')} that I want to redesign. Style preferences: ${styleMood} mood, ${styleType} design type, ${budget} budget. Provide 5-7 specific suggestions for: wall colors, furniture placement, lighting, decor items, and any structural changes. Be concise but specific.`
+            content: `I have a ${roomType.replace('-', ' ')} that I want to redesign. Style preferences: ${styleDescription}, ${budget} budget. Provide 5-7 specific suggestions for: wall colors, furniture placement, lighting, decor items, and any structural changes. Be concise but specific.`
           }
         ],
       }),
@@ -147,7 +153,7 @@ serve(async (req) => {
           {
             role: "user",
             content: [
-              { type: "text", text: `Transform this ${roomType.replace('-', ' ')} into a beautifully designed space with ${styleMood} mood and ${styleType} style. Add furniture, wall paint, decor, and lighting appropriate for a ${budget} budget. Make it look realistic and professionally designed.` },
+              { type: "text", text: `Transform this ${roomType.replace('-', ' ')} into a beautifully designed space matching this style: ${styleDescription}. Add furniture, wall paint, decor, and lighting appropriate for a ${budget} budget. Make it look realistic and professionally designed.` },
               { type: "image_url", image_url: { url: imageUrl } }
             ]
           }
