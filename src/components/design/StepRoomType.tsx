@@ -17,13 +17,13 @@ const roomTypes = [
 
 const StepRoomType: React.FC<StepRoomTypeProps> = ({ selected, onSelect, onNext }) => {
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2">Select Room Type</h1>
-        <p className="text-muted-foreground">Choose the type of room you want to redesign</p>
+    <div className="max-w-3xl mx-auto px-2 sm:px-0">
+      <div className="text-center mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Select Room Type</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">Choose the type of room you want to redesign</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
         {roomTypes.map((room) => (
           <Card
             key={room.id}
@@ -34,21 +34,21 @@ const StepRoomType: React.FC<StepRoomTypeProps> = ({ selected, onSelect, onNext 
             }`}
             onClick={() => onSelect(room.id)}
           >
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-4 sm:p-6 text-center">
               <div
-                className={`w-16 h-16 mx-auto mb-4 rounded-xl flex items-center justify-center transition-colors ${
+                className={`w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-lg sm:rounded-xl flex items-center justify-center transition-colors ${
                   selected === room.id
                     ? 'roomyfy-gradient'
                     : 'bg-muted'
                 }`}
               >
                 <room.icon
-                  className={`h-8 w-8 ${
+                  className={`h-6 w-6 sm:h-8 sm:w-8 ${
                     selected === room.id ? 'text-primary-foreground' : 'text-muted-foreground'
                   }`}
                 />
               </div>
-              <h3 className="font-semibold text-lg">{room.label}</h3>
+              <h3 className="font-semibold text-base sm:text-lg">{room.label}</h3>
             </CardContent>
           </Card>
         ))}
@@ -57,12 +57,12 @@ const StepRoomType: React.FC<StepRoomTypeProps> = ({ selected, onSelect, onNext 
       <div className="flex justify-end">
         <Button
           size="lg"
-          className="roomyfy-gradient"
+          className="roomyfy-gradient w-full sm:w-auto"
           disabled={!selected}
           onClick={onNext}
         >
           Continue
-          <ArrowRight className="ml-2 h-5 w-5" />
+          <ArrowRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5" />
         </Button>
       </div>
     </div>

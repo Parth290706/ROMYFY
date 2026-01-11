@@ -8,20 +8,22 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
+      {/* Navigation */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b border-border/50">
-        <nav className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <img src={logo} alt="ROOMYFY Logo" className="h-12 w-12 rounded-full" width={48} height={48} loading="eager" decoding="async" />
-            <span className="text-xl font-bold roomyfy-text-gradient">ROOMYFY</span>
+        <nav className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 sm:gap-3">
+            <img src={logo} alt="ROOMYFY Logo" className="h-10 w-10 sm:h-12 sm:w-12 rounded-full" width={48} height={48} loading="eager" decoding="async" />
+            <span className="text-lg sm:text-xl font-bold roomyfy-text-gradient">ROOMYFY</span>
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link to="/login">
-              <Button variant="ghost" className="text-foreground hover:text-primary">Login</Button>
+              <Button variant="ghost" size="sm" className="text-foreground hover:text-primary px-2 sm:px-4">Login</Button>
             </Link>
             <Link to="/signup">
-              <Button className="roomyfy-gradient text-primary-foreground font-semibold">
-                Get Started
-                <ArrowRight className="ml-2 h-4 w-4" />
+              <Button size="sm" className="roomyfy-gradient text-primary-foreground font-semibold px-3 sm:px-4">
+                <span className="hidden sm:inline">Get Started</span>
+                <span className="sm:hidden">Start</span>
+                <ArrowRight className="ml-1 sm:ml-2 h-4 w-4" />
               </Button>
             </Link>
           </div>
@@ -29,51 +31,52 @@ const Landing = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 overflow-hidden">
+      <section className="relative pt-24 sm:pt-32 pb-12 sm:pb-20 overflow-hidden">
         {/* Background Effects */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-20 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-accent/10 rounded-full blur-3xl" />
+          <div className="absolute top-20 left-1/4 w-48 sm:w-96 h-48 sm:h-96 bg-primary/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-1/4 w-40 sm:w-80 h-40 sm:h-80 bg-accent/10 rounded-full blur-3xl" />
         </div>
         
-        <div className="container mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
+              className="text-center lg:text-left"
             >
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
-                className="mb-6"
+                className="mb-4 sm:mb-6"
               >
-                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-primary text-sm font-medium roomyfy-border-glow">
-                  <Sparkles className="h-4 w-4" />
+                <span className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-secondary text-primary text-xs sm:text-sm font-medium roomyfy-border-glow">
+                  <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
                   AI-Powered Interior Design
                 </span>
               </motion.div>
               
-              <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6 text-foreground">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold leading-tight mb-4 sm:mb-6 text-foreground">
                 Design Your{' '}
                 <span className="roomyfy-text-gradient">Dream Room</span>{' '}
                 in Seconds
               </h1>
-              <p className="text-lg text-muted-foreground mb-8 max-w-lg">
+              <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-lg mx-auto lg:mx-0">
                 Transform your empty rooms into stunning living spaces with AI-powered design suggestions. Upload your photo, choose your style, and watch the magic happen.
               </p>
-              <div className="flex flex-wrap gap-4">
-                <Link to="/signup">
-                  <Button size="lg" className="roomyfy-gradient text-primary-foreground text-lg px-8 font-semibold roomyfy-glow hover:scale-105 transition-transform">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 justify-center lg:justify-start">
+                <Link to="/signup" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full sm:w-auto roomyfy-gradient text-primary-foreground text-base sm:text-lg px-6 sm:px-8 font-semibold roomyfy-glow hover:scale-105 transition-transform">
                     Get Started Free
-                    <ArrowRight className="ml-2 h-5 w-5" />
+                    <ArrowRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5" />
                   </Button>
                 </Link>
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="text-lg px-8 border-border hover:bg-secondary hover:text-primary"
+                  className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 border-border hover:bg-secondary hover:text-primary"
                   onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
                 >
                   Learn More
@@ -85,15 +88,15 @@ const Landing = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="relative"
+              className="relative mt-8 lg:mt-0"
             >
-              <div className="aspect-[4/3] rounded-3xl roomyfy-gradient-soft roomyfy-card-shadow roomyfy-border-glow overflow-hidden">
+              <div className="aspect-[4/3] rounded-2xl sm:rounded-3xl roomyfy-gradient-soft roomyfy-card-shadow roomyfy-border-glow overflow-hidden">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center p-8">
+                  <div className="text-center p-4 sm:p-8">
                     <motion.img 
                       src={logo} 
                       alt="ROOMYFY" 
-                      className="w-40 h-40 mx-auto mb-6 roomyfy-glow rounded-full"
+                      className="w-24 h-24 sm:w-40 sm:h-40 mx-auto mb-4 sm:mb-6 roomyfy-glow rounded-full"
                       width={160}
                       height={160}
                       loading="lazy"
@@ -107,19 +110,19 @@ const Landing = () => {
                       }}
                       transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                     />
-                    <p className="text-muted-foreground text-lg">Design Your Room in Seconds</p>
+                    <p className="text-muted-foreground text-sm sm:text-lg">Design Your Room in Seconds</p>
                   </div>
                 </div>
               </div>
               
-              {/* Floating decorative elements */}
+              {/* Floating decorative elements - hidden on mobile */}
               <motion.div 
-                className="absolute -top-4 -right-4 w-20 h-20 rounded-2xl roomyfy-gradient opacity-80"
+                className="hidden sm:block absolute -top-4 -right-4 w-20 h-20 rounded-2xl roomyfy-gradient opacity-80"
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               />
               <motion.div 
-                className="absolute -bottom-6 -left-6 w-16 h-16 rounded-xl bg-accent/60"
+                className="hidden sm:block absolute -bottom-6 -left-6 w-16 h-16 rounded-xl bg-accent/60"
                 animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
               />
@@ -129,23 +132,23 @@ const Landing = () => {
       </section>
 
       {/* Features Section */}
-      <section id="how-it-works" className="py-20 bg-card/50">
-        <div className="container mx-auto px-6">
+      <section id="how-it-works" className="py-12 sm:py-20 bg-card/50">
+        <div className="container mx-auto px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-10 sm:mb-16"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4 text-foreground">
               How It <span className="roomyfy-text-gradient">Works</span>
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+            <p className="text-muted-foreground max-w-2xl mx-auto text-base sm:text-lg px-4">
               Transform any room in just a few simple steps
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {[
               {
                 icon: Home,
@@ -172,16 +175,16 @@ const Landing = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="relative p-8 rounded-3xl bg-card roomyfy-card-shadow roomyfy-border-glow text-center group hover:scale-105 transition-transform duration-300"
+                className="relative p-6 sm:p-8 rounded-2xl sm:rounded-3xl bg-card roomyfy-card-shadow roomyfy-border-glow text-center group hover:scale-105 transition-transform duration-300"
               >
-                <div className="absolute -top-3 -left-3 w-10 h-10 rounded-full roomyfy-gradient flex items-center justify-center text-primary-foreground font-bold text-sm">
+                <div className="absolute -top-2 -left-2 sm:-top-3 sm:-left-3 w-8 h-8 sm:w-10 sm:h-10 rounded-full roomyfy-gradient flex items-center justify-center text-primary-foreground font-bold text-xs sm:text-sm">
                   {feature.step}
                 </div>
-                <div className="w-16 h-16 mx-auto mb-6 rounded-2xl roomyfy-gradient flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <feature.icon className="h-8 w-8 text-primary-foreground" />
+                <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 sm:mb-6 rounded-xl sm:rounded-2xl roomyfy-gradient flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <feature.icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary-foreground" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3 text-foreground">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
+                <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 text-foreground">{feature.title}</h3>
+                <p className="text-sm sm:text-base text-muted-foreground">{feature.description}</p>
               </motion.div>
             ))}
           </div>
@@ -189,31 +192,31 @@ const Landing = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-6">
+      <section className="py-12 sm:py-20">
+        <div className="container mx-auto px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="relative roomyfy-gradient rounded-3xl p-12 text-center overflow-hidden"
+            className="relative roomyfy-gradient rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-center overflow-hidden"
           >
             {/* Background pattern */}
             <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 left-0 w-40 h-40 border border-primary-foreground/30 rounded-full -translate-x-1/2 -translate-y-1/2" />
-              <div className="absolute bottom-0 right-0 w-60 h-60 border border-primary-foreground/30 rounded-full translate-x-1/4 translate-y-1/4" />
+              <div className="absolute top-0 left-0 w-24 sm:w-40 h-24 sm:h-40 border border-primary-foreground/30 rounded-full -translate-x-1/2 -translate-y-1/2" />
+              <div className="absolute bottom-0 right-0 w-32 sm:w-60 h-32 sm:h-60 border border-primary-foreground/30 rounded-full translate-x-1/4 translate-y-1/4" />
             </div>
             
             <div className="relative z-10">
-              <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-foreground mb-3 sm:mb-4">
                 Ready to Transform Your Space?
               </h2>
-              <p className="text-primary-foreground/80 mb-8 max-w-lg mx-auto text-lg">
+              <p className="text-primary-foreground/80 mb-6 sm:mb-8 max-w-lg mx-auto text-base sm:text-lg px-4">
                 Join thousands of users who have redesigned their homes with ROOMYFY
               </p>
               <Link to="/signup">
-                <Button size="lg" className="bg-background text-foreground hover:bg-background/90 text-lg px-8 font-semibold">
+                <Button size="lg" className="bg-background text-foreground hover:bg-background/90 text-base sm:text-lg px-6 sm:px-8 font-semibold">
                   Start Designing Now
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5" />
                 </Button>
               </Link>
             </div>
@@ -222,13 +225,13 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 border-t border-border/50">
-        <div className="container mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="ROOMYFY" className="h-8 w-8 rounded-full" width={32} height={32} loading="lazy" decoding="async" />
-            <span className="text-sm text-muted-foreground">© 2024 ROOMYFY. All rights reserved.</span>
+      <footer className="py-6 sm:py-8 border-t border-border/50">
+        <div className="container mx-auto px-4 sm:px-6 flex flex-col items-center justify-between gap-3 sm:gap-4 md:flex-row">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <img src={logo} alt="ROOMYFY" className="h-6 w-6 sm:h-8 sm:w-8 rounded-full" width={32} height={32} loading="lazy" decoding="async" />
+            <span className="text-xs sm:text-sm text-muted-foreground">© 2024 ROOMYFY. All rights reserved.</span>
           </div>
-          <p className="text-sm roomyfy-text-gradient font-medium">Design Your Room in Seconds</p>
+          <p className="text-xs sm:text-sm roomyfy-text-gradient font-medium">Design Your Room in Seconds</p>
         </div>
       </footer>
     </div>

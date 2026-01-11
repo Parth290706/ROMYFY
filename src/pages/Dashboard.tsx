@@ -110,34 +110,34 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-card border-b sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="h-10 w-10 rounded-xl roomyfy-gradient flex items-center justify-center">
-              <Home className="h-5 w-5 text-primary-foreground" />
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl roomyfy-gradient flex items-center justify-center">
+              <Home className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground">ROOMYFY</span>
+            <span className="text-lg sm:text-xl font-bold text-foreground">ROOMYFY</span>
           </Link>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground hidden md:block">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <span className="text-xs sm:text-sm text-muted-foreground hidden sm:block truncate max-w-[150px] md:max-w-none">
               {user?.email}
             </span>
-            <Button variant="ghost" size="icon" onClick={handleSignOut}>
-              <LogOut className="h-5 w-5" />
+            <Button variant="ghost" size="icon" onClick={handleSignOut} className="h-8 w-8 sm:h-10 sm:w-10">
+              <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Welcome Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-6 sm:mb-8"
         >
-          <h1 className="text-3xl font-bold mb-2">Welcome Back!</h1>
-          <p className="text-muted-foreground">Ready to design your next dream space?</p>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Welcome Back!</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Ready to design your next dream space?</p>
         </motion.div>
 
         {/* New Design CTA */}
@@ -145,21 +145,21 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-12"
+          className="mb-8 sm:mb-12"
         >
           <Link to="/design/new">
             <Card className="roomyfy-gradient border-0 cursor-pointer hover:opacity-95 transition-opacity">
-              <CardContent className="p-8 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-2xl bg-primary-foreground/20 flex items-center justify-center">
-                    <Plus className="h-8 w-8 text-primary-foreground" />
+              <CardContent className="p-4 sm:p-8 flex items-center justify-between">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl bg-primary-foreground/20 flex items-center justify-center">
+                    <Plus className="h-6 w-6 sm:h-8 sm:w-8 text-primary-foreground" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-primary-foreground">New Design</h2>
-                    <p className="text-primary-foreground/80">Start designing a new room</p>
+                    <h2 className="text-lg sm:text-2xl font-bold text-primary-foreground">New Design</h2>
+                    <p className="text-sm sm:text-base text-primary-foreground/80">Start designing a new room</p>
                   </div>
                 </div>
-                <Sparkles className="h-8 w-8 text-primary-foreground" />
+                <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-primary-foreground" />
               </CardContent>
             </Card>
           </Link>
@@ -171,14 +171,14 @@ const Dashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <h2 className="text-2xl font-bold mb-6">Your Designs</h2>
+          <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Your Designs</h2>
 
           {loading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {[1, 2, 3].map((i) => (
                 <Card key={i} className="animate-pulse">
                   <div className="aspect-[4/3] bg-muted rounded-t-lg" />
-                  <CardContent className="p-4">
+                  <CardContent className="p-3 sm:p-4">
                     <div className="h-4 bg-muted rounded w-3/4 mb-2" />
                     <div className="h-3 bg-muted rounded w-1/2" />
                   </CardContent>
@@ -187,12 +187,12 @@ const Dashboard = () => {
             </div>
           ) : designs.length === 0 ? (
             <Card className="border-dashed">
-              <CardContent className="p-12 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted flex items-center justify-center">
-                  <Sparkles className="h-8 w-8 text-muted-foreground" />
+              <CardContent className="p-8 sm:p-12 text-center">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-xl sm:rounded-2xl bg-muted flex items-center justify-center">
+                  <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">No designs yet</h3>
-                <p className="text-muted-foreground mb-4">
+                <h3 className="text-base sm:text-lg font-semibold mb-2">No designs yet</h3>
+                <p className="text-sm sm:text-base text-muted-foreground mb-4">
                   Create your first room design to get started
                 </p>
                 <Link to="/design/new">
@@ -204,7 +204,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {designs.map((design, index) => (
                 <motion.div
                   key={design.id}

@@ -41,16 +41,16 @@ const StepStyle: React.FC<StepStyleProps> = ({
   const isCustomSelected = selectedType === 'custom';
   const canContinue = selectedMood && selectedType && (!isCustomSelected || customPrompt.trim().length > 0);
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2">Choose Your Style</h1>
-        <p className="text-muted-foreground">Select the mood and design type you prefer</p>
+    <div className="max-w-4xl mx-auto px-2 sm:px-0">
+      <div className="text-center mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Choose Your Style</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">Select the mood and design type you prefer</p>
       </div>
 
       {/* Mood Selection */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Mood</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="mb-6 sm:mb-8">
+        <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Mood</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           {moods.map((mood) => (
             <Card
               key={mood.id}
@@ -61,22 +61,22 @@ const StepStyle: React.FC<StepStyleProps> = ({
               }`}
               onClick={() => onSelectMood(mood.id)}
             >
-              <CardContent className="p-4 text-center">
+              <CardContent className="p-3 sm:p-4 text-center">
                 <div
-                  className={`w-12 h-12 mx-auto mb-3 rounded-xl flex items-center justify-center transition-colors ${
+                  className={`w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 rounded-lg sm:rounded-xl flex items-center justify-center transition-colors ${
                     selectedMood === mood.id
                       ? 'roomyfy-gradient'
                       : 'bg-muted'
                   }`}
                 >
                   <mood.icon
-                    className={`h-6 w-6 ${
+                    className={`h-5 w-5 sm:h-6 sm:w-6 ${
                       selectedMood === mood.id ? 'text-primary-foreground' : 'text-muted-foreground'
                     }`}
                   />
                 </div>
-                <h3 className="font-semibold">{mood.label}</h3>
-                <p className="text-xs text-muted-foreground">{mood.description}</p>
+                <h3 className="font-semibold text-sm sm:text-base">{mood.label}</h3>
+                <p className="text-xs text-muted-foreground hidden sm:block">{mood.description}</p>
               </CardContent>
             </Card>
           ))}
@@ -84,9 +84,9 @@ const StepStyle: React.FC<StepStyleProps> = ({
       </div>
 
       {/* Type Selection */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Design Type</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="mb-6 sm:mb-8">
+        <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Design Type</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           {types.map((type) => (
             <Card
               key={type.id}
@@ -97,22 +97,22 @@ const StepStyle: React.FC<StepStyleProps> = ({
               }`}
               onClick={() => onSelectType(type.id)}
             >
-              <CardContent className="p-4 text-center">
+              <CardContent className="p-3 sm:p-4 text-center">
                 <div
-                  className={`w-12 h-12 mx-auto mb-3 rounded-xl flex items-center justify-center transition-colors ${
+                  className={`w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 rounded-lg sm:rounded-xl flex items-center justify-center transition-colors ${
                     selectedType === type.id
                       ? 'roomyfy-gradient'
                       : 'bg-muted'
                   }`}
                 >
                   <type.icon
-                    className={`h-6 w-6 ${
+                    className={`h-5 w-5 sm:h-6 sm:w-6 ${
                       selectedType === type.id ? 'text-primary-foreground' : 'text-muted-foreground'
                     }`}
                   />
                 </div>
-                <h3 className="font-semibold">{type.label}</h3>
-                <p className="text-xs text-muted-foreground">{type.description}</p>
+                <h3 className="font-semibold text-sm sm:text-base">{type.label}</h3>
+                <p className="text-xs text-muted-foreground hidden sm:block">{type.description}</p>
               </CardContent>
             </Card>
           ))}
@@ -121,13 +121,13 @@ const StepStyle: React.FC<StepStyleProps> = ({
 
       {/* Custom Prompt Input */}
       {isCustomSelected && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Describe Your Custom Style</h2>
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Describe Your Custom Style</h2>
           <Textarea
             placeholder="Describe your dream room style... E.g., 'A cozy bohemian living room with warm earth tones, hanging plants, woven textures, and vintage furniture pieces'"
             value={customPrompt}
             onChange={(e) => onCustomPromptChange?.(e.target.value)}
-            className="min-h-[120px] resize-none"
+            className="min-h-[100px] sm:min-h-[120px] resize-none text-sm sm:text-base"
           />
           <p className="text-xs text-muted-foreground mt-2">
             Be specific about colors, materials, furniture styles, and atmosphere you want.
@@ -135,19 +135,19 @@ const StepStyle: React.FC<StepStyleProps> = ({
         </div>
       )}
 
-      <div className="flex justify-between">
-        <Button variant="outline" size="lg" onClick={onBack}>
-          <ArrowLeft className="mr-2 h-5 w-5" />
+      <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 sm:gap-0">
+        <Button variant="outline" size="lg" onClick={onBack} className="w-full sm:w-auto">
+          <ArrowLeft className="mr-2 h-4 sm:h-5 w-4 sm:w-5" />
           Back
         </Button>
         <Button
           size="lg"
-          className="roomyfy-gradient"
+          className="roomyfy-gradient w-full sm:w-auto"
           disabled={!canContinue}
           onClick={onNext}
         >
           Continue
-          <ArrowRight className="ml-2 h-5 w-5" />
+          <ArrowRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5" />
         </Button>
       </div>
     </div>
