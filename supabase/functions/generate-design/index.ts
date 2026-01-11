@@ -92,6 +92,23 @@ serve(async (req) => {
     // Use service role client for admin operations (after ownership verified)
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY!);
 
+    // Rate limiting: Check requests in last hour (max 10 per hour)
+    const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+    const { count: requestCount } = await supabase
+      .from("room_designs")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .gte("created_at", oneHourAgo);
+
+    if (requestCount && requestCount >= 10) {
+      return new Response(JSON.stringify({ 
+        error: "Rate limit exceeded. Please try again later." 
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "3600" },
+      });
+    }
+
     // Generate text suggestions
     const suggestionsResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -170,8 +187,16 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Error:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
+    // Log detailed error server-side for debugging
+    console.error("Design generation error:", {
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.stack : error,
+    });
+    
+    // Return generic error message to client (don't expose internal details)
+    return new Response(JSON.stringify({ 
+      error: "Failed to generate design. Please try again later." 
+    }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
