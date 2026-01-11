@@ -19,11 +19,16 @@ interface RoomDesign {
   created_at: string;
 }
 
+interface DesignWithSignedUrls extends RoomDesign {
+  originalSignedUrl?: string;
+  generatedSignedUrl?: string;
+}
+
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [designs, setDesigns] = useState<RoomDesign[]>([]);
+  const [designs, setDesigns] = useState<DesignWithSignedUrls[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,9 +43,40 @@ const Dashboard = () => {
 
     if (error) {
       console.error('Error fetching designs:', error);
-    } else {
-      setDesigns(data || []);
+      setLoading(false);
+      return;
     }
+    
+    // Generate signed URLs for each design
+    const designsWithUrls = await Promise.all(
+      (data || []).map(async (design) => {
+        const result: DesignWithSignedUrls = { ...design };
+        
+        // Get signed URL for original image
+        if (design.original_image_url && !design.original_image_url.startsWith('http')) {
+          const { data: signedData } = await supabase.storage
+            .from('room-images')
+            .createSignedUrl(design.original_image_url, 3600);
+          result.originalSignedUrl = signedData?.signedUrl;
+        } else {
+          result.originalSignedUrl = design.original_image_url;
+        }
+        
+        // Get signed URL for generated image
+        if (design.generated_image_url && !design.generated_image_url.startsWith('http')) {
+          const { data: signedData } = await supabase.storage
+            .from('room-images')
+            .createSignedUrl(design.generated_image_url, 3600);
+          result.generatedSignedUrl = signedData?.signedUrl;
+        } else {
+          result.generatedSignedUrl = design.generated_image_url || undefined;
+        }
+        
+        return result;
+      })
+    );
+    
+    setDesigns(designsWithUrls);
     setLoading(false);
   };
 
@@ -178,19 +214,19 @@ const Dashboard = () => {
                 >
                   <Card className="overflow-hidden roomyfy-card-shadow hover:shadow-lg transition-shadow group">
                     <div className="aspect-[4/3] bg-muted relative">
-                      {design.generated_image_url ? (
+                      {design.generatedSignedUrl ? (
                         <img
-                          src={design.generated_image_url}
+                          src={design.generatedSignedUrl}
                           alt="Generated design"
                           className="w-full h-full object-cover"
                         />
-                      ) : (
+                      ) : design.originalSignedUrl ? (
                         <img
-                          src={design.original_image_url}
+                          src={design.originalSignedUrl}
                           alt="Original room"
                           className="w-full h-full object-cover"
                         />
-                      )}
+                      ) : null}
                       {design.status === 'pending' && (
                         <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
                           <div className="text-center">

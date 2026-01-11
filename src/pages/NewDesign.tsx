@@ -69,12 +69,14 @@ const NewDesign = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
+      // Create signed URL for the AI to access (1 hour expiry)
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from('room-images')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 3600);
 
-      // Create design record
+      if (signedUrlError) throw signedUrlError;
+
+      // Create design record - store the path, not the URL
       const { data: design, error: insertError } = await supabase
         .from('room_designs')
         .insert({
@@ -83,7 +85,7 @@ const NewDesign = () => {
           style_mood: designData.styleMood,
           style_type: designData.styleType,
           budget: designData.budget,
-          original_image_url: publicUrl,
+          original_image_url: fileName, // Store path instead of URL
           status: 'processing',
         })
         .select()
@@ -91,11 +93,11 @@ const NewDesign = () => {
 
       if (insertError) throw insertError;
 
-      // Call AI edge function
+      // Call AI edge function with signed URL
       const { data: aiResult, error: aiError } = await supabase.functions.invoke('generate-design', {
         body: {
           designId: design.id,
-          imageUrl: publicUrl,
+          imageUrl: signedUrlData.signedUrl, // Use signed URL for AI access
           roomType: designData.roomType,
           styleMood: designData.styleMood,
           styleType: designData.styleType,
