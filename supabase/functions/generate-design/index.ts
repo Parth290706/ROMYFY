@@ -166,7 +166,8 @@ serve(async (req) => {
       const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, '');
       const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
       
-      const fileName = `generated/${designId}.png`;
+      // Upload to user's folder so RLS policies allow access
+      const fileName = `${user.id}/generated-${designId}.png`;
       await supabase.storage.from('room-images').upload(fileName, imageBuffer, {
         contentType: 'image/png',
         upsert: true
