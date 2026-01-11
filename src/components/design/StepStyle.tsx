@@ -1,12 +1,15 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { ArrowRight, ArrowLeft, Sparkles, Crown, Laptop, Leaf, MapPin, Globe, Minimize, Palette } from 'lucide-react';
 
 interface StepStyleProps {
   selectedMood: string;
   selectedType: string;
+  customPrompt?: string;
   onSelectMood: (mood: string) => void;
   onSelectType: (type: string) => void;
+  onCustomPromptChange?: (prompt: string) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -28,11 +31,15 @@ const types = [
 const StepStyle: React.FC<StepStyleProps> = ({
   selectedMood,
   selectedType,
+  customPrompt = '',
   onSelectMood,
   onSelectType,
+  onCustomPromptChange,
   onNext,
   onBack,
 }) => {
+  const isCustomSelected = selectedType === 'custom';
+  const canContinue = selectedMood && selectedType && (!isCustomSelected || customPrompt.trim().length > 0);
   return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
@@ -112,6 +119,22 @@ const StepStyle: React.FC<StepStyleProps> = ({
         </div>
       </div>
 
+      {/* Custom Prompt Input */}
+      {isCustomSelected && (
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold mb-4">Describe Your Custom Style</h2>
+          <Textarea
+            placeholder="Describe your dream room style... E.g., 'A cozy bohemian living room with warm earth tones, hanging plants, woven textures, and vintage furniture pieces'"
+            value={customPrompt}
+            onChange={(e) => onCustomPromptChange?.(e.target.value)}
+            className="min-h-[120px] resize-none"
+          />
+          <p className="text-xs text-muted-foreground mt-2">
+            Be specific about colors, materials, furniture styles, and atmosphere you want.
+          </p>
+        </div>
+      )}
+
       <div className="flex justify-between">
         <Button variant="outline" size="lg" onClick={onBack}>
           <ArrowLeft className="mr-2 h-5 w-5" />
@@ -120,7 +143,7 @@ const StepStyle: React.FC<StepStyleProps> = ({
         <Button
           size="lg"
           className="roomyfy-gradient"
-          disabled={!selectedMood || !selectedType}
+          disabled={!canContinue}
           onClick={onNext}
         >
           Continue

@@ -17,6 +17,7 @@ export interface DesignData {
   imagePreview: string;
   styleMood: string;
   styleType: string;
+  customPrompt: string;
   budget: string;
 }
 
@@ -32,6 +33,7 @@ const NewDesign = () => {
     imagePreview: '',
     styleMood: '',
     styleType: '',
+    customPrompt: '',
     budget: '',
   });
 
@@ -101,6 +103,7 @@ const NewDesign = () => {
           roomType: designData.roomType,
           styleMood: designData.styleMood,
           styleType: designData.styleType,
+          customPrompt: designData.customPrompt,
           budget: designData.budget,
         },
       });
@@ -177,8 +180,10 @@ const NewDesign = () => {
               <StepStyle
                 selectedMood={designData.styleMood}
                 selectedType={designData.styleType}
+                customPrompt={designData.customPrompt}
                 onSelectMood={(mood) => updateDesignData({ styleMood: mood })}
-                onSelectType={(type) => updateDesignData({ styleType: type })}
+                onSelectType={(type) => updateDesignData({ styleType: type, customPrompt: type === 'custom' ? designData.customPrompt : '' })}
+                onCustomPromptChange={(prompt) => updateDesignData({ customPrompt: prompt })}
                 onNext={nextStep}
                 onBack={prevStep}
               />
