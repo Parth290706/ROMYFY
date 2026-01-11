@@ -20,11 +20,17 @@ interface DesignResult {
   created_at: string;
 }
 
+interface SignedUrls {
+  originalSignedUrl?: string;
+  generatedSignedUrl?: string;
+}
+
 const DesignResult = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [design, setDesign] = useState<DesignResult | null>(null);
+  const [signedUrls, setSignedUrls] = useState<SignedUrls>({});
   const [loading, setLoading] = useState(true);
   const [showBefore, setShowBefore] = useState(false);
 
@@ -42,8 +48,11 @@ const DesignResult = () => {
           table: 'room_designs',
           filter: `id=eq.${id}`,
         },
-        (payload) => {
-          setDesign(payload.new as DesignResult);
+        async (payload) => {
+          const updatedDesign = payload.new as DesignResult;
+          setDesign(updatedDesign);
+          // Refresh signed URLs when design is updated
+          await generateSignedUrls(updatedDesign);
         }
       )
       .subscribe();
@@ -52,6 +61,32 @@ const DesignResult = () => {
       supabase.removeChannel(channel);
     };
   }, [id]);
+
+  const generateSignedUrls = async (designData: DesignResult) => {
+    const urls: SignedUrls = {};
+    
+    // Get signed URL for original image
+    if (designData.original_image_url && !designData.original_image_url.startsWith('http')) {
+      const { data } = await supabase.storage
+        .from('room-images')
+        .createSignedUrl(designData.original_image_url, 3600);
+      urls.originalSignedUrl = data?.signedUrl;
+    } else {
+      urls.originalSignedUrl = designData.original_image_url;
+    }
+    
+    // Get signed URL for generated image
+    if (designData.generated_image_url && !designData.generated_image_url.startsWith('http')) {
+      const { data } = await supabase.storage
+        .from('room-images')
+        .createSignedUrl(designData.generated_image_url, 3600);
+      urls.generatedSignedUrl = data?.signedUrl;
+    } else {
+      urls.generatedSignedUrl = designData.generated_image_url || undefined;
+    }
+    
+    setSignedUrls(urls);
+  };
 
   const fetchDesign = async () => {
     const { data, error } = await supabase
@@ -65,20 +100,21 @@ const DesignResult = () => {
       navigate('/dashboard');
     } else {
       setDesign(data);
+      await generateSignedUrls(data);
     }
     setLoading(false);
   };
 
   const handleDownload = async () => {
-    if (!design?.generated_image_url) return;
+    if (!signedUrls.generatedSignedUrl) return;
 
     try {
-      const response = await fetch(design.generated_image_url);
+      const response = await fetch(signedUrls.generatedSignedUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `roomyfy-design-${design.id}.jpg`;
+      a.download = `roomyfy-design-${design?.id}.jpg`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -124,7 +160,7 @@ const DesignResult = () => {
               <span className="text-xl font-bold text-foreground">ROOMYFY</span>
             </Link>
           </div>
-          {design.generated_image_url && (
+          {signedUrls.generatedSignedUrl && (
             <Button onClick={handleDownload} className="roomyfy-gradient">
               <Download className="mr-2 h-4 w-4" />
               Download
@@ -172,11 +208,17 @@ const DesignResult = () => {
                     <h3 className="font-semibold">Before</h3>
                   </div>
                   <div className="aspect-[4/3]">
-                    <img
-                      src={design.original_image_url}
-                      alt="Original room"
-                      className="w-full h-full object-cover"
-                    />
+                    {signedUrls.originalSignedUrl ? (
+                      <img
+                        src={signedUrls.originalSignedUrl}
+                        alt="Original room"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <p className="text-muted-foreground">Loading image...</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -188,9 +230,9 @@ const DesignResult = () => {
                     <Sparkles className="h-5 w-5 text-primary" />
                   </div>
                   <div className="aspect-[4/3]">
-                    {design.generated_image_url ? (
+                    {signedUrls.generatedSignedUrl ? (
                       <img
-                        src={design.generated_image_url}
+                        src={signedUrls.generatedSignedUrl}
                         alt="AI generated design"
                         className="w-full h-full object-cover"
                       />

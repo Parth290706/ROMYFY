@@ -172,8 +172,8 @@ serve(async (req) => {
         upsert: true
       });
 
-      const { data: { publicUrl } } = supabase.storage.from('room-images').getPublicUrl(fileName);
-      generatedImageUrl = publicUrl;
+      // Store the path, not the URL - client will generate signed URLs
+      generatedImageUrl = fileName;
     }
 
     // Update design record
@@ -187,10 +187,11 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    // Log detailed error server-side for debugging
+    // Log sanitized error server-side for debugging
     console.error("Design generation error:", {
       timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.stack : error,
+      errorType: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
     
     // Return generic error message to client (don't expose internal details)
