@@ -42,7 +42,7 @@ const Dashboard = () => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching designs:', error);
+      // Silent fail - user sees empty state, no sensitive info logged
       setLoading(false);
       return;
     }
