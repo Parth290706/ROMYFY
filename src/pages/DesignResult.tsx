@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Home, ArrowLeft, Download, Sparkles, Clock, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
+import ShareDesignButton from '@/components/ShareDesignButton';
 
 interface DesignResult {
   id: string;
@@ -160,12 +161,15 @@ const DesignResult = () => {
               <span className="text-lg sm:text-xl font-bold text-foreground hidden sm:inline">ROOMYFY</span>
             </Link>
           </div>
-          {signedUrls.generatedSignedUrl && (
-            <Button onClick={handleDownload} className="roomyfy-gradient text-sm sm:text-base px-3 sm:px-4">
-              <Download className="mr-1 sm:mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Download</span>
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <ShareDesignButton designId={design.id} roomType={design.room_type} />
+            {signedUrls.generatedSignedUrl && (
+              <Button onClick={handleDownload} className="roomyfy-gradient text-sm sm:text-base px-3 sm:px-4">
+                <Download className="mr-1 sm:mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Download</span>
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
