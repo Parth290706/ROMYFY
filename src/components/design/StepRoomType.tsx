@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Home, Bed, Briefcase, ChefHat, ArrowRight } from 'lucide-react';
+import { Home, Bed, Briefcase, ChefHat, ArrowRight, Flame, Bath, Sofa } from 'lucide-react';
 
 interface StepRoomTypeProps {
   selected: string;
@@ -13,6 +13,9 @@ const roomTypes = [
   { id: 'bedroom', label: 'Bedroom', icon: Bed },
   { id: 'office', label: 'Office', icon: Briefcase },
   { id: 'kitchen', label: 'Kitchen', icon: ChefHat },
+  { id: 'pooja-room', label: 'Pooja Room', icon: Flame },
+  { id: 'bathroom', label: 'Bathroom', icon: Bath },
+  { id: 'balcony', label: 'Balcony/Lobby', icon: Sofa },
 ];
 
 const StepRoomType: React.FC<StepRoomTypeProps> = ({ selected, onSelect, onNext }) => {
@@ -23,7 +26,7 @@ const StepRoomType: React.FC<StepRoomTypeProps> = ({ selected, onSelect, onNext 
         <p className="text-sm sm:text-base text-muted-foreground">Choose the type of room you want to redesign</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         {roomTypes.map((room) => (
           <Card
             key={room.id}

@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowRight, ArrowLeft, Sparkles, Crown, Laptop, Leaf, MapPin, Globe, Minimize, Palette } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowRight, ArrowLeft, Sparkles, Crown, Laptop, Leaf, Check, Palette } from 'lucide-react';
 
 interface StepStyleProps {
   selectedMood: string;
@@ -14,18 +16,88 @@ interface StepStyleProps {
   onBack: () => void;
 }
 
-const moods = [
-  { id: 'calm', label: 'Calm', icon: Leaf, description: 'Peaceful & relaxing' },
-  { id: 'luxury', label: 'Luxury', icon: Crown, description: 'Elegant & premium' },
-  { id: 'modern', label: 'Modern', icon: Laptop, description: 'Clean & contemporary' },
-  { id: 'traditional', label: 'Traditional', icon: Sparkles, description: 'Classic & timeless' },
-];
-
-const types = [
-  { id: 'indian', label: 'Indian', icon: MapPin, description: 'Rich cultural elements' },
-  { id: 'western', label: 'Western', icon: Globe, description: 'European & American' },
-  { id: 'minimal', label: 'Minimal', icon: Minimize, description: 'Less is more' },
-  { id: 'custom', label: 'Custom', icon: Palette, description: 'Mix & match styles' },
+// Ready-made style templates with descriptions
+const styleTemplates = [
+  {
+    id: 'modern-minimal',
+    name: 'Modern Minimal',
+    mood: 'modern',
+    type: 'minimal',
+    icon: Laptop,
+    prompt: 'Clean lines, neutral colors (white, grey, beige), sleek furniture, open space, minimal decor, natural light emphasis',
+    tags: ['Clean', 'Sleek', 'Contemporary'],
+    color: 'from-slate-400 to-slate-600',
+  },
+  {
+    id: 'indian-traditional',
+    name: 'Indian Traditional',
+    mood: 'traditional',
+    type: 'indian',
+    icon: Sparkles,
+    prompt: 'Rich wooden furniture, brass accents, colorful textiles (red, gold, orange), carved details, diyas, rangoli patterns, warm lighting',
+    tags: ['Cultural', 'Warm', 'Classic'],
+    color: 'from-amber-500 to-orange-600',
+  },
+  {
+    id: 'pooja-sacred',
+    name: 'Pooja Room Sacred',
+    mood: 'traditional',
+    type: 'indian',
+    icon: Sparkles,
+    prompt: 'Marble or wooden mandir, brass idols, bell, incense holder, lotus motifs, saffron and gold colors, LED diya lights, sacred symbols',
+    tags: ['Spiritual', 'Sacred', 'Divine'],
+    color: 'from-yellow-500 to-red-500',
+  },
+  {
+    id: 'luxury-royal',
+    name: 'Luxury Royal',
+    mood: 'luxury',
+    type: 'western',
+    icon: Crown,
+    prompt: 'Velvet upholstery, crystal chandeliers, gold accents, marble floors, ornate mirrors, rich jewel tones (emerald, sapphire, ruby)',
+    tags: ['Premium', 'Elegant', 'Grand'],
+    color: 'from-purple-500 to-indigo-600',
+  },
+  {
+    id: 'calm-zen',
+    name: 'Calm & Zen',
+    mood: 'calm',
+    type: 'minimal',
+    icon: Leaf,
+    prompt: 'Natural materials (bamboo, wood, stone), indoor plants, water features, soft earth tones, low furniture, diffused natural lighting',
+    tags: ['Peaceful', 'Natural', 'Relaxing'],
+    color: 'from-green-400 to-teal-500',
+  },
+  {
+    id: 'bohemian-eclectic',
+    name: 'Bohemian Chic',
+    mood: 'calm',
+    type: 'custom',
+    icon: Palette,
+    prompt: 'Layered textiles, macrame, vintage furniture, houseplants, warm earthy colors with pops of vibrant hues, global-inspired patterns',
+    tags: ['Artistic', 'Eclectic', 'Cozy'],
+    color: 'from-pink-400 to-orange-400',
+  },
+  {
+    id: 'scandinavian',
+    name: 'Scandinavian',
+    mood: 'modern',
+    type: 'western',
+    icon: Laptop,
+    prompt: 'White walls, light wood floors, functional furniture, cozy textiles, plants, black accents, hygge atmosphere',
+    tags: ['Nordic', 'Cozy', 'Functional'],
+    color: 'from-sky-300 to-blue-400',
+  },
+  {
+    id: 'custom',
+    name: 'Custom Style',
+    mood: '',
+    type: 'custom',
+    icon: Palette,
+    prompt: '',
+    tags: ['Your Vision', 'Personalized'],
+    color: 'from-primary to-primary/70',
+  },
 ];
 
 const StepStyle: React.FC<StepStyleProps> = ({
@@ -38,86 +110,111 @@ const StepStyle: React.FC<StepStyleProps> = ({
   onNext,
   onBack,
 }) => {
-  const isCustomSelected = selectedType === 'custom';
-  const canContinue = selectedMood && selectedType && (!isCustomSelected || customPrompt.trim().length > 0);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const isCustomSelected = selectedTemplate === 'custom';
+  
+  const handleTemplateSelect = (template: typeof styleTemplates[0]) => {
+    setSelectedTemplate(template.id);
+    
+    if (template.id === 'custom') {
+      onSelectMood('modern');
+      onSelectType('custom');
+      onCustomPromptChange?.('');
+    } else {
+      onSelectMood(template.mood);
+      onSelectType(template.type);
+      onCustomPromptChange?.(template.prompt);
+    }
+  };
+  
+  const canContinue = selectedTemplate && (!isCustomSelected || customPrompt.trim().length > 0);
+
   return (
-    <div className="max-w-4xl mx-auto px-2 sm:px-0">
+    <div className="max-w-5xl mx-auto px-2 sm:px-0">
       <div className="text-center mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Choose Your Style</h1>
-        <p className="text-sm sm:text-base text-muted-foreground">Select the mood and design type you prefer</p>
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">Choose Your Design Style</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
+          Select a ready-made style template or create your own custom design
+        </p>
       </div>
 
-      {/* Mood Selection */}
-      <div className="mb-6 sm:mb-8">
-        <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Mood</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-          {moods.map((mood) => (
-            <Card
-              key={mood.id}
-              className={`cursor-pointer transition-all hover:shadow-lg ${
-                selectedMood === mood.id
-                  ? 'ring-2 ring-primary roomyfy-card-shadow'
-                  : 'hover:border-primary/50'
-              }`}
-              onClick={() => onSelectMood(mood.id)}
-            >
-              <CardContent className="p-3 sm:p-4 text-center">
-                <div
-                  className={`w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 rounded-lg sm:rounded-xl flex items-center justify-center transition-colors ${
-                    selectedMood === mood.id
-                      ? 'roomyfy-gradient'
-                      : 'bg-muted'
-                  }`}
-                >
-                  <mood.icon
-                    className={`h-5 w-5 sm:h-6 sm:w-6 ${
-                      selectedMood === mood.id ? 'text-primary-foreground' : 'text-muted-foreground'
-                    }`}
-                  />
+      {/* Style Templates Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        {styleTemplates.map((template) => (
+          <Card
+            key={template.id}
+            className={`cursor-pointer transition-all hover:shadow-lg group relative overflow-hidden ${
+              selectedTemplate === template.id
+                ? 'ring-2 ring-primary roomyfy-card-shadow'
+                : 'hover:border-primary/50'
+            }`}
+            onClick={() => handleTemplateSelect(template)}
+          >
+            <CardContent className="p-4">
+              {/* Icon with gradient background */}
+              <div
+                className={`w-12 h-12 mx-auto mb-3 rounded-xl flex items-center justify-center bg-gradient-to-br ${template.color} shadow-lg`}
+              >
+                <template.icon className="h-6 w-6 text-white" />
+              </div>
+              
+              {/* Template name */}
+              <h3 className="font-semibold text-center mb-2">{template.name}</h3>
+              
+              {/* Tags */}
+              <div className="flex flex-wrap justify-center gap-1 mb-3">
+                {template.tags.map((tag) => (
+                  <Badge 
+                    key={tag} 
+                    variant="secondary" 
+                    className="text-xs px-2 py-0.5"
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+              
+              {/* Preview prompt (truncated) */}
+              {template.prompt && (
+                <p className="text-xs text-muted-foreground text-center line-clamp-2">
+                  {template.prompt}
+                </p>
+              )}
+              
+              {template.id === 'custom' && (
+                <p className="text-xs text-muted-foreground text-center">
+                  Describe your own unique style vision
+                </p>
+              )}
+              
+              {/* Selected indicator */}
+              {selectedTemplate === template.id && (
+                <div className="absolute top-2 right-2">
+                  <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                    <Check className="h-4 w-4 text-primary-foreground" />
+                  </div>
                 </div>
-                <h3 className="font-semibold text-sm sm:text-base">{mood.label}</h3>
-                <p className="text-xs text-muted-foreground hidden sm:block">{mood.description}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Type Selection */}
-      <div className="mb-6 sm:mb-8">
-        <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Design Type</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-          {types.map((type) => (
-            <Card
-              key={type.id}
-              className={`cursor-pointer transition-all hover:shadow-lg ${
-                selectedType === type.id
-                  ? 'ring-2 ring-primary roomyfy-card-shadow'
-                  : 'hover:border-primary/50'
-              }`}
-              onClick={() => onSelectType(type.id)}
-            >
-              <CardContent className="p-3 sm:p-4 text-center">
-                <div
-                  className={`w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 rounded-lg sm:rounded-xl flex items-center justify-center transition-colors ${
-                    selectedType === type.id
-                      ? 'roomyfy-gradient'
-                      : 'bg-muted'
-                  }`}
-                >
-                  <type.icon
-                    className={`h-5 w-5 sm:h-6 sm:w-6 ${
-                      selectedType === type.id ? 'text-primary-foreground' : 'text-muted-foreground'
-                    }`}
-                  />
-                </div>
-                <h3 className="font-semibold text-sm sm:text-base">{type.label}</h3>
-                <p className="text-xs text-muted-foreground hidden sm:block">{type.description}</p>
-              </CardContent>
-            </Card>
-          ))}
+      {/* Selected Style Preview */}
+      {selectedTemplate && selectedTemplate !== 'custom' && (
+        <div className="mb-6 sm:mb-8 p-4 bg-muted/50 rounded-xl border">
+          <h3 className="font-semibold mb-2 flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            Style Preview
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {styleTemplates.find(t => t.id === selectedTemplate)?.prompt}
+          </p>
+          <p className="text-xs text-muted-foreground mt-2 italic">
+            This style will be applied to your room design
+          </p>
         </div>
-      </div>
+      )}
 
       {/* Custom Prompt Input */}
       {isCustomSelected && (
