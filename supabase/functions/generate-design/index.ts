@@ -18,10 +18,38 @@ const RequestSchema = z.object({
   budget: z.enum(["low", "medium", "high"], { errorMap: () => ({ message: "Invalid budget option" }) }),
 });
 
+function extractImageDataUrl(payload: any): string | null {
+  const msg = payload?.choices?.[0]?.message;
+  const fromImages = msg?.images?.[0]?.image_url?.url;
+  if (typeof fromImages === "string" && fromImages.length) return fromImages;
+
+  const content = msg?.content;
+  if (typeof content === "string") {
+    if (content.startsWith("data:image/")) return content;
+  }
+
+  if (Array.isArray(content)) {
+    const imagePart = content.find(
+      (p: any) => p?.type === "image_url" && typeof p?.image_url?.url === "string"
+    );
+    if (imagePart?.image_url?.url) return imagePart.image_url.url;
+
+    const textPart = content.find(
+      (p: any) => p?.type === "text" && typeof p?.text === "string" && p.text.startsWith("data:image/")
+    );
+    if (textPart?.text) return textPart.text;
+  }
+
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+
+  let designIdForError: string | null = null;
+  let adminClient: any = null;
 
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -68,10 +96,11 @@ serve(async (req) => {
     }
 
     const { designId, imageUrl, roomType, styleMood, styleType, customPrompt, budget } = validationResult.data;
-    
+    designIdForError = designId;
+
     // Build style description - use custom prompt if provided, otherwise use predefined style
-    const styleDescription = styleType === 'custom' && customPrompt 
-      ? customPrompt 
+    const styleDescription = styleType === "custom" && customPrompt
+      ? customPrompt
       : `${styleMood} mood with ${styleType} design style`;
 
     // Verify ownership of the design
@@ -97,6 +126,7 @@ serve(async (req) => {
 
     // Use service role client for admin operations (after ownership verified)
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY!);
+    adminClient = supabase;
 
     // Rate limiting: Check requests in last hour (max 10 per hour)
     const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
@@ -107,13 +137,19 @@ serve(async (req) => {
       .gte("created_at", oneHourAgo);
 
     if (requestCount && requestCount >= 10) {
-      return new Response(JSON.stringify({ 
-        error: "Rate limit exceeded. Please try again later." 
+      return new Response(JSON.stringify({
+        error: "Rate limit exceeded. Please try again later.",
       }), {
         status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "3600" },
       });
     }
+
+    // Mark as processing (best effort) so results page can show live state
+    await supabase
+      .from("room_designs")
+      .update({ status: "processing", generated_image_url: null })
+      .eq("id", designId);
 
     // Generate text suggestions
     const suggestionsResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -127,18 +163,41 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "You are an expert interior designer. Provide specific, actionable design suggestions."
+            content: "You are an expert interior designer. Provide specific, actionable design suggestions.",
           },
           {
             role: "user",
-            content: `I have a ${roomType.replace('-', ' ')} that I want to redesign. Style preferences: ${styleDescription}, ${budget} budget. Provide 5-7 specific suggestions for: wall colors, furniture placement, lighting, decor items, and any structural changes. Be concise but specific.`
-          }
+            content:
+              `I have a ${roomType.replace("-", " ")} that I want to redesign. ` +
+              `Style preferences: ${styleDescription}, ${budget} budget. ` +
+              `Provide 5-7 specific suggestions for: wall colors, furniture placement, lighting, decor items, and any structural changes. ` +
+              `Be concise but specific.`,
+          },
         ],
       }),
     });
 
-    const suggestionsData = await suggestionsResponse.json();
-    const suggestions = suggestionsData.choices?.[0]?.message?.content || "Unable to generate suggestions.";
+    if (!suggestionsResponse.ok) {
+      if (suggestionsResponse.status === 429) {
+        return new Response(JSON.stringify({ error: "Rate limits exceeded. Please try again later." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (suggestionsResponse.status === 402) {
+        return new Response(JSON.stringify({ error: "AI credits required. Please add credits and try again." }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      throw new Error(`suggestions gateway error: ${suggestionsResponse.status}`);
+    }
+
+    const suggestionsData = await suggestionsResponse.json().catch(() => ({}));
+    const suggestionsRaw = suggestionsData?.choices?.[0]?.message?.content;
+    const suggestions = typeof suggestionsRaw === "string" && suggestionsRaw.trim().length
+      ? suggestionsRaw
+      : "Unable to generate suggestions.";
 
     // Generate redesigned image
     const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -153,60 +212,126 @@ serve(async (req) => {
           {
             role: "user",
             content: [
-              { type: "text", text: `Transform this ${roomType.replace('-', ' ')} into a beautifully designed space matching this style: ${styleDescription}. Add furniture, wall paint, decor, and lighting appropriate for a ${budget} budget. Make it look realistic and professionally designed.` },
-              { type: "image_url", image_url: { url: imageUrl } }
-            ]
-          }
+              {
+                type: "text",
+                text:
+                  `Transform this ${roomType.replace("-", " ")} into a beautifully designed space matching this style: ${styleDescription}. ` +
+                  `Add furniture, wall paint, decor, and lighting appropriate for a ${budget} budget. ` +
+                  `Make it look realistic and professionally designed.`,
+              },
+              { type: "image_url", image_url: { url: imageUrl } },
+            ],
+          },
         ],
-        modalities: ["image", "text"]
+        modalities: ["image", "text"],
       }),
     });
 
-    const imageData = await imageResponse.json();
-    let generatedImageUrl = null;
-
-    if (imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url) {
-      const base64Image = imageData.choices[0].message.images[0].image_url.url;
-      
-      // Upload to storage
-      const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, '');
-      const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-      
-      // Upload to user's folder so RLS policies allow access
-      const fileName = `${user.id}/generated-${designId}.png`;
-      await supabase.storage.from('room-images').upload(fileName, imageBuffer, {
-        contentType: 'image/png',
-        upsert: true
-      });
-
-      // Store the path, not the URL - client will generate signed URLs
-      generatedImageUrl = fileName;
+    if (!imageResponse.ok) {
+      if (imageResponse.status === 429) {
+        return new Response(JSON.stringify({ error: "Rate limits exceeded. Please try again later." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (imageResponse.status === 402) {
+        return new Response(JSON.stringify({ error: "AI credits required. Please add credits and try again." }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      throw new Error(`image gateway error: ${imageResponse.status}`);
     }
 
-    // Update design record
-    await supabase.from('room_designs').update({
-      ai_suggestions: suggestions,
-      generated_image_url: generatedImageUrl,
-      status: 'completed'
-    }).eq('id', designId);
+    const imageData = await imageResponse.json().catch(() => ({}));
+    const imageDataUrl = extractImageDataUrl(imageData);
 
-    return new Response(JSON.stringify({ success: true }), {
+    let generatedImageUrl: string | null = null;
+
+    if (imageDataUrl) {
+      const fileName = `${user.id}/generated-${designId}.png`;
+
+      let imageBuffer: Uint8Array | null = null;
+      let contentType = "image/png";
+
+      if (imageDataUrl.startsWith("data:image/")) {
+        const match = imageDataUrl.match(/^data:(image\/\w+);base64,/);
+        if (match?.[1]) contentType = match[1];
+
+        const base64Data = imageDataUrl.replace(/^data:image\/\w+;base64,/, "");
+        imageBuffer = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+      } else if (imageDataUrl.startsWith("http")) {
+        const fetched = await fetch(imageDataUrl);
+        if (fetched.ok) {
+          contentType = fetched.headers.get("content-type") || contentType;
+          const buf = await fetched.arrayBuffer();
+          imageBuffer = new Uint8Array(buf);
+        }
+      }
+
+      if (imageBuffer) {
+        const { error: uploadError } = await supabase.storage.from("room-images").upload(fileName, imageBuffer, {
+          contentType,
+          upsert: true,
+        });
+
+        if (!uploadError) {
+          // Store the path, not the URL - client will generate signed URLs
+          generatedImageUrl = fileName;
+        }
+      }
+    }
+
+    const finalStatus = generatedImageUrl ? "completed" : "failed";
+
+    // Update design record
+    await supabase
+      .from("room_designs")
+      .update({
+        ai_suggestions: suggestions,
+        generated_image_url: generatedImageUrl,
+        status: finalStatus,
+      })
+      .eq("id", designId);
+
+    return new Response(JSON.stringify({ success: true, status: finalStatus }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     // Log sanitized error server-side for debugging
     console.error("Design generation error:", {
       timestamp: new Date().toISOString(),
-      errorType: error instanceof Error ? error.name : 'Unknown',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      designId: designIdForError,
+      errorType: error instanceof Error ? error.name : "Unknown",
+      message: error instanceof Error ? error.message : "Unknown error",
     });
-    
-    // Return generic error message to client (don't expose internal details)
-    return new Response(JSON.stringify({ 
-      error: "Failed to generate design. Please try again later." 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+
+    // Best-effort: mark the design as failed so the UI can offer a retry
+    if (adminClient && designIdForError) {
+      try {
+        await adminClient
+          .from("room_designs")
+          .update({
+            status: "failed",
+            generated_image_url: null,
+            ai_suggestions: "Generation failed. Please try again from the results page.",
+          })
+          .eq("id", designIdForError);
+      } catch (updateErr) {
+        console.error("Failed to mark design as failed:", updateErr);
+      }
+    }
+
+    // Return a non-throwing response so the client can still navigate to results.
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: "Failed to generate design. Please try again.",
+        status: "failed",
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   }
 });

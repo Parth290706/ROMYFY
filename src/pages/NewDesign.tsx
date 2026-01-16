@@ -108,14 +108,18 @@ const NewDesign = () => {
         },
       });
 
-      if (aiError) {
-        // Silent fail - still navigate to result, it will show pending status
+      if (aiError || aiResult?.success === false) {
+        toast({
+          variant: 'destructive',
+          title: 'Generation issue',
+          description: 'We saved your design, but the AI image could not be generated. You can retry from the results page.',
+        });
+      } else {
+        toast({
+          title: 'Design created!',
+          description: 'Generating your AI design… redirecting to results.',
+        });
       }
-
-      toast({
-        title: 'Design created!',
-        description: 'Your AI-powered design is ready.',
-      });
 
       navigate(`/design/${design.id}`);
     } catch {

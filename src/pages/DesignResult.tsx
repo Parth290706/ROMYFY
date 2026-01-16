@@ -34,10 +34,11 @@ const DesignResult = () => {
   const [signedUrls, setSignedUrls] = useState<SignedUrls>({});
   const [loading, setLoading] = useState(true);
   const [showBefore, setShowBefore] = useState(false);
+  const [retrying, setRetrying] = useState(false);
 
   useEffect(() => {
     fetchDesign();
-    
+
     // Set up realtime subscription for status updates
     const channel = supabase
       .channel(`design-${id}`)
@@ -65,7 +66,7 @@ const DesignResult = () => {
 
   const generateSignedUrls = async (designData: DesignResult) => {
     const urls: SignedUrls = {};
-    
+
     // Get signed URL for original image
     if (designData.original_image_url && !designData.original_image_url.startsWith('http')) {
       const { data } = await supabase.storage
@@ -75,7 +76,7 @@ const DesignResult = () => {
     } else {
       urls.originalSignedUrl = designData.original_image_url;
     }
-    
+
     // Get signed URL for generated image
     if (designData.generated_image_url && !designData.generated_image_url.startsWith('http')) {
       const { data } = await supabase.storage
@@ -85,7 +86,7 @@ const DesignResult = () => {
     } else {
       urls.generatedSignedUrl = designData.generated_image_url || undefined;
     }
-    
+
     setSignedUrls(urls);
   };
 
@@ -126,6 +127,48 @@ const DesignResult = () => {
         title: 'Download failed',
         description: 'Could not download the image.',
       });
+    }
+  };
+
+  const handleRetryGeneration = async () => {
+    if (!design || retrying) return;
+
+    try {
+      setRetrying(true);
+
+      const { data: signed, error: signedErr } = await supabase.storage
+        .from('room-images')
+        .createSignedUrl(design.original_image_url, 3600);
+
+      if (signedErr || !signed?.signedUrl) {
+        throw signedErr || new Error('Could not access original image');
+      }
+
+      const { error: fnErr } = await supabase.functions.invoke('generate-design', {
+        body: {
+          designId: design.id,
+          imageUrl: signed.signedUrl,
+          roomType: design.room_type,
+          styleMood: design.style_mood,
+          styleType: design.style_type,
+          budget: design.budget,
+        },
+      });
+
+      if (fnErr) throw fnErr;
+
+      toast({
+        title: 'Retry started',
+        description: 'Generating a new image now…',
+      });
+    } catch {
+      toast({
+        variant: 'destructive',
+        title: 'Retry failed',
+        description: 'Please try again in a moment.',
+      });
+    } finally {
+      setRetrying(false);
     }
   };
 
