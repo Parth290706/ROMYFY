@@ -111,8 +111,10 @@ const NewDesign = () => {
       if (aiError || aiResult?.success === false) {
         toast({
           variant: 'destructive',
-          title: 'Generation issue',
-          description: 'We saved your design, but the AI image could not be generated. You can retry from the results page.',
+          title: aiResult?.error_code === 'AI_CREDITS_REQUIRED' ? 'AI credits required' : 'Generation issue',
+          description:
+            aiResult?.error ||
+            'We saved your design, but the AI image could not be generated. You can retry from the results page.',
         });
       } else {
         toast({

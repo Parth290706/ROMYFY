@@ -128,6 +128,46 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY!);
     adminClient = supabase;
 
+    const setDesignFailed = async (reason: string, suggestionsOverride?: string) => {
+      if (!adminClient || !designIdForError) return;
+      try {
+        await adminClient
+          .from("room_designs")
+          .update({
+            status: "failed",
+            generated_image_url: null,
+            ai_suggestions: suggestionsOverride ?? reason,
+          })
+          .eq("id", designIdForError);
+      } catch (e) {
+        console.error("Failed to mark design as failed:", e);
+      }
+    };
+
+    const respondSoftFailure = async (payload: {
+      error: string;
+      error_code: "AI_CREDITS_REQUIRED" | "RATE_LIMITED" | "AI_GATEWAY_ERROR";
+      retryable: boolean;
+      suggestionsOverride?: string;
+    }) => {
+      await setDesignFailed(payload.error, payload.suggestionsOverride);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          status: "failed",
+          error: payload.error,
+          error_code: payload.error_code,
+          retryable: payload.retryable,
+        }),
+        {
+          // IMPORTANT: return 200 so supabase.functions.invoke doesn't throw a FunctionsHttpError
+          // and the UI can reliably show a friendly message instead of a blank screen.
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    };
+
     // Rate limiting: Check requests in last hour (max 10 per hour)
     const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
     const { count: requestCount } = await supabase
@@ -179,18 +219,27 @@ serve(async (req) => {
 
     if (!suggestionsResponse.ok) {
       if (suggestionsResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limits exceeded. Please try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        return await respondSoftFailure({
+          error: "Rate limits exceeded. Please try again later.",
+          error_code: "RATE_LIMITED",
+          retryable: true,
         });
       }
       if (suggestionsResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits required. Please add credits and try again." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        return await respondSoftFailure({
+          error: "AI credits required. Please add credits and try again.",
+          error_code: "AI_CREDITS_REQUIRED",
+          retryable: false,
         });
       }
-      throw new Error(`suggestions gateway error: ${suggestionsResponse.status}`);
+
+      const t = await suggestionsResponse.text().catch(() => "");
+      console.error("AI suggestions gateway error:", suggestionsResponse.status, t);
+      return await respondSoftFailure({
+        error: "AI service error. Please try again.",
+        error_code: "AI_GATEWAY_ERROR",
+        retryable: true,
+      });
     }
 
     const suggestionsData = await suggestionsResponse.json().catch(() => ({}));
@@ -229,18 +278,34 @@ serve(async (req) => {
 
     if (!imageResponse.ok) {
       if (imageResponse.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limits exceeded. Please try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        const msg = "Rate limits exceeded. Please try again later.";
+        return await respondSoftFailure({
+          error: msg,
+          error_code: "RATE_LIMITED",
+          retryable: true,
+          suggestionsOverride: `${suggestions}\n\n---\n${msg}`,
         });
       }
       if (imageResponse.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits required. Please add credits and try again." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        // We may still have text suggestions, so preserve them.
+        const msg = "AI credits required. Please add credits and try again.";
+        return await respondSoftFailure({
+          error: msg,
+          error_code: "AI_CREDITS_REQUIRED",
+          retryable: false,
+          suggestionsOverride: `${suggestions}\n\n---\n${msg}`,
         });
       }
-      throw new Error(`image gateway error: ${imageResponse.status}`);
+
+      const t = await imageResponse.text().catch(() => "");
+      console.error("AI image gateway error:", imageResponse.status, t);
+      const msg = "AI service error. Please try again.";
+      return await respondSoftFailure({
+        error: msg,
+        error_code: "AI_GATEWAY_ERROR",
+        retryable: true,
+        suggestionsOverride: `${suggestions}\n\n---\n${msg}`,
+      });
     }
 
     const imageData = await imageResponse.json().catch(() => ({}));
