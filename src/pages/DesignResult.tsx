@@ -144,7 +144,7 @@ const DesignResult = () => {
         throw signedErr || new Error('Could not access original image');
       }
 
-      const { error: fnErr } = await supabase.functions.invoke('generate-design', {
+      const { data: fnData, error: fnErr } = await supabase.functions.invoke('generate-design', {
         body: {
           designId: design.id,
           imageUrl: signed.signedUrl,
@@ -156,6 +156,15 @@ const DesignResult = () => {
       });
 
       if (fnErr) throw fnErr;
+
+      if (fnData?.success === false) {
+        toast({
+          variant: 'destructive',
+          title: fnData?.error_code === 'AI_CREDITS_REQUIRED' ? 'AI credits required' : 'Retry failed',
+          description: fnData?.error || 'Please try again in a moment.',
+        });
+        return;
+      }
 
       toast({
         title: 'Retry started',
@@ -244,6 +253,21 @@ const DesignResult = () => {
                 <p className="text-sm sm:text-base text-muted-foreground">
                   Our AI is working on your design. This may take a minute...
                 </p>
+
+                <div className="mt-4 sm:mt-6 flex flex-col items-center gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleRetryGeneration}
+                    disabled={retrying}
+                    className="w-full max-w-xs"
+                  >
+                    <RefreshCw className={"mr-2 h-4 w-4" + (retrying ? " animate-spin" : "")} />
+                    {retrying ? 'Retrying…' : 'Retry generation'}
+                  </Button>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    If it looks stuck, retrying will re-run generation.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           ) : (
