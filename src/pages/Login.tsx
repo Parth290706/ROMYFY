@@ -24,25 +24,27 @@ const Login = () => {
     setFormError('');
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    try {
+      const { error } = await signIn(email, password);
 
-    if (error) {
-      if (error.message?.includes('Invalid login credentials')) {
-        setFormError('Invalid email or password. Please try again.');
-      } else if (error.message?.includes('Email not confirmed')) {
-        setFormError('Please verify your email before signing in. Check your inbox for a confirmation link.');
+      if (error) {
+        const msg = error.message || '';
+        if (msg.includes('Invalid login credentials')) {
+          setFormError('Invalid email or password. Please try again.');
+        } else if (msg.includes('Email not confirmed')) {
+          setFormError('Please verify your email before signing in.');
+        } else {
+          setFormError(msg || 'Login failed. Please try again.');
+        }
       } else {
-        setFormError(error.message || 'Login failed. Please try again.');
+        toast({ title: 'Welcome back!', description: 'You have successfully logged in.' });
+        navigate('/dashboard');
       }
-    } else {
-      toast({
-        title: 'Welcome back!',
-        description: 'You have successfully logged in.',
-      });
-      navigate('/dashboard');
+    } catch (err: any) {
+      setFormError(err?.message || 'An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -74,6 +76,7 @@ const Login = () => {
                   {formError}
                 </div>
               )}
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
