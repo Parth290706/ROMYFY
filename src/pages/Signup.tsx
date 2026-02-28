@@ -50,7 +50,11 @@ const Signup = () => {
         setFormError(error.message || 'Signup failed. Please try again.');
       }
     } else {
-      setSignupSuccess(true);
+      toast({
+        title: 'Account created!',
+        description: "Welcome to ROOMYFY. Let's design your dream space!",
+      });
+      navigate('/dashboard');
     }
 
     setLoading(false);
