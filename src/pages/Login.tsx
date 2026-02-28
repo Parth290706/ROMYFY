@@ -14,22 +14,26 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState('');
   const { signIn } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
     setLoading(true);
 
     const { error } = await signIn(email, password);
 
     if (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Login failed',
-        description: error.message,
-      });
+      if (error.message?.includes('Invalid login credentials')) {
+        setFormError('Invalid email or password. Please try again.');
+      } else if (error.message?.includes('Email not confirmed')) {
+        setFormError('Please verify your email before signing in. Check your inbox for a confirmation link.');
+      } else {
+        setFormError(error.message || 'Login failed. Please try again.');
+      }
     } else {
       toast({
         title: 'Welcome back!',
@@ -65,6 +69,11 @@ const Login = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {formError && (
+                <div className="bg-destructive/10 border border-destructive/30 text-destructive rounded-lg p-3 text-sm">
+                  {formError}
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -72,7 +81,7 @@ const Login = () => {
                   type="email"
                   placeholder="Enter your email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => { setEmail(e.target.value); setFormError(''); }}
                   required
                   className="h-12"
                 />
@@ -86,7 +95,7 @@ const Login = () => {
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Enter your password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => { setPassword(e.target.value); setFormError(''); }}
                     required
                     className="h-12 pr-12"
                   />
