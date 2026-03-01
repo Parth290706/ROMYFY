@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-
 import { supabase } from '@/integrations/supabase/client';
-import { Home, Plus, LogOut, Sparkles, Clock, Trash2 } from 'lucide-react';
+import { Home, Plus, Sparkles, Clock, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 
@@ -25,20 +24,14 @@ interface DesignWithSignedUrls extends RoomDesign {
 }
 
 const Dashboard = () => {
-  const user = null as any; // Auth removed — will be added later
-  const signOut = async () => {};
   const navigate = useNavigate();
   const { toast } = useToast();
   const [designs, setDesigns] = useState<DesignWithSignedUrls[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      fetchDesigns();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
+    fetchDesigns();
+  }, []);
 
   const fetchDesigns = async () => {
     const { data, error } = await supabase
@@ -47,17 +40,14 @@ const Dashboard = () => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      // Silent fail - user sees empty state, no sensitive info logged
       setLoading(false);
       return;
     }
     
-    // Generate signed URLs for each design
     const designsWithUrls = await Promise.all(
       (data || []).map(async (design) => {
         const result: DesignWithSignedUrls = { ...design };
         
-        // Get signed URL for original image
         if (design.original_image_url && !design.original_image_url.startsWith('http')) {
           const { data: signedData } = await supabase.storage
             .from('room-images')
@@ -67,7 +57,6 @@ const Dashboard = () => {
           result.originalSignedUrl = design.original_image_url;
         }
         
-        // Get signed URL for generated image
         if (design.generated_image_url && !design.generated_image_url.startsWith('http')) {
           const { data: signedData } = await supabase.storage
             .from('room-images')
@@ -83,11 +72,6 @@ const Dashboard = () => {
     
     setDesigns(designsWithUrls);
     setLoading(false);
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
   };
 
   const handleDeleteDesign = async (id: string) => {
@@ -113,52 +97,34 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="bg-card border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-          <Link to="/dashboard" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl roomyfy-gradient flex items-center justify-center">
               <Home className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
             </div>
             <span className="text-lg sm:text-xl font-bold text-foreground">ROOMYFY</span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-4">
-            {user ? (
-              <>
-                <span className="text-xs sm:text-sm text-muted-foreground hidden sm:block truncate max-w-[150px] md:max-w-none">
-                  {user.email}
-                </span>
-                <Button variant="ghost" size="icon" onClick={handleSignOut} className="h-8 w-8 sm:h-10 sm:w-10">
-                  <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
-              </>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Link to="/login">
-                  <Button variant="ghost" size="sm">Login</Button>
-                </Link>
-                <Link to="/signup">
-                  <Button size="sm" className="roomyfy-gradient text-primary-foreground">Sign Up</Button>
-                </Link>
-              </div>
-            )}
+            <Link to="/design/new">
+              <Button size="sm" className="roomyfy-gradient text-primary-foreground">
+                <Plus className="mr-1 h-4 w-4" /> New Design
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* Welcome Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-6 sm:mb-8"
         >
-          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Welcome Back!</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Welcome!</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Ready to design your next dream space?</p>
         </motion.div>
 
-        {/* New Design CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -183,13 +149,12 @@ const Dashboard = () => {
           </Link>
         </motion.div>
 
-        {/* Previous Designs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Your Designs</h2>
+          <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Recent Designs</h2>
 
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -233,17 +198,9 @@ const Dashboard = () => {
                   <Card className="overflow-hidden roomyfy-card-shadow hover:shadow-lg transition-shadow group">
                     <div className="aspect-[4/3] bg-muted relative">
                       {design.generatedSignedUrl ? (
-                        <img
-                          src={design.generatedSignedUrl}
-                          alt="Generated design"
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={design.generatedSignedUrl} alt="Generated design" className="w-full h-full object-cover" />
                       ) : design.originalSignedUrl ? (
-                        <img
-                          src={design.originalSignedUrl}
-                          alt="Original room"
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={design.originalSignedUrl} alt="Original room" className="w-full h-full object-cover" />
                       ) : null}
                       {design.status === 'pending' && (
                         <div className="absolute inset-0 bg-background/80 flex items-center justify-center">

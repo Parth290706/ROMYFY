@@ -20,7 +20,6 @@ interface Review {
 }
 
 const Reviews = () => {
-  const user = null; // Auth removed — will be added later
   const { toast } = useToast();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,14 +46,6 @@ const Reviews = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
-      toast({
-        variant: 'destructive',
-        title: 'Login Required',
-        description: 'Please login to submit a review.',
-      });
-      return;
-    }
 
     if (!reviewText.trim()) {
       toast({
@@ -67,17 +58,10 @@ const Reviews = () => {
 
     setSubmitting(true);
 
-    // Get user name from profile or email
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('user_id', user.id)
-      .single();
-
-    const userName = profile?.full_name || user.email?.split('@')[0] || 'Anonymous';
+    const userName = 'Guest';
 
     const { error } = await supabase.from('reviews').insert({
-      user_id: user.id,
+      user_id: `guest_${Date.now()}`,
       rating,
       review_text: reviewText.trim(),
       user_name: userName,
@@ -136,20 +120,9 @@ const Reviews = () => {
             <span className="text-lg sm:text-xl font-bold roomyfy-text-gradient">ROOMYFY</span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-4">
-            {user ? (
-              <Link to="/dashboard">
-                <Button size="sm" className="roomyfy-gradient">Dashboard</Button>
-              </Link>
-            ) : (
-              <>
-                <Link to="/login">
-                  <Button variant="ghost" size="sm">Login</Button>
-                </Link>
-                <Link to="/signup">
-                  <Button size="sm" className="roomyfy-gradient">Sign Up</Button>
-                </Link>
-              </>
-            )}
+            <Link to="/design/new">
+              <Button size="sm" className="roomyfy-gradient">Start Designing</Button>
+            </Link>
           </div>
         </nav>
       </header>

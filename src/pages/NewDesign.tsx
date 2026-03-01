@@ -24,7 +24,7 @@ export interface DesignData {
 const NewDesign = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const user = null as any; // Auth removed — will be added later
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [designData, setDesignData] = useState<DesignData>({
@@ -58,21 +58,13 @@ const NewDesign = () => {
   const handleSubmit = async () => {
     if (!designData.imageFile) return;
 
-    if (!user) {
-      toast({
-        title: 'Login required',
-        description: 'Please sign in or create an account to save your design.',
-      });
-      navigate('/login');
-      return;
-    }
-
     setIsProcessing(true);
 
     try {
       // Upload original image to storage
+      const guestId = `guest_${Date.now()}`;
       const fileExt = designData.imageFile.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const fileName = `${guestId}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('room-images')
@@ -91,7 +83,7 @@ const NewDesign = () => {
       const { data: design, error: insertError } = await supabase
         .from('room_designs')
         .insert({
-          user_id: user.id,
+          user_id: guestId,
           room_type: designData.roomType,
           style_mood: designData.styleMood,
           style_type: designData.styleType,
