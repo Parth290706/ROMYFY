@@ -67,7 +67,7 @@ const Landing = () => {
                 Transform your empty rooms into stunning living spaces with AI-powered design suggestions. Upload your photo, choose your style, and watch the magic happen.
               </p>
               <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 justify-center lg:justify-start">
-                <Link to="/signup" className="w-full sm:w-auto">
+                <Link to="/design/new" className="w-full sm:w-auto">
                   <Button size="lg" className="w-full sm:w-auto roomyfy-gradient text-primary-foreground text-base sm:text-lg px-6 sm:px-8 font-semibold roomyfy-glow hover:scale-105 transition-transform">
                     Get Started Free
                     <ArrowRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5" />
@@ -241,7 +241,7 @@ const Landing = () => {
               <p className="text-primary-foreground/80 mb-6 sm:mb-8 max-w-lg mx-auto text-base sm:text-lg px-4">
                 Join thousands of users who have redesigned their homes with ROOMYFY
               </p>
-              <Link to="/signup">
+              <Link to="/design/new">
                 <Button size="lg" className="bg-background text-foreground hover:bg-background/90 text-base sm:text-lg px-6 sm:px-8 font-semibold">
                   Start Designing Now
                   <ArrowRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5" />

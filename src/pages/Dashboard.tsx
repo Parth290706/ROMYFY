@@ -32,8 +32,12 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDesigns();
-  }, []);
+    if (user) {
+      fetchDesigns();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
 
   const fetchDesigns = async () => {
     const { data, error } = await supabase
@@ -118,12 +122,25 @@ const Dashboard = () => {
             <span className="text-lg sm:text-xl font-bold text-foreground">ROOMYFY</span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-4">
-            <span className="text-xs sm:text-sm text-muted-foreground hidden sm:block truncate max-w-[150px] md:max-w-none">
-              {user?.email}
-            </span>
-            <Button variant="ghost" size="icon" onClick={handleSignOut} className="h-8 w-8 sm:h-10 sm:w-10">
-              <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
+            {user ? (
+              <>
+                <span className="text-xs sm:text-sm text-muted-foreground hidden sm:block truncate max-w-[150px] md:max-w-none">
+                  {user.email}
+                </span>
+                <Button variant="ghost" size="icon" onClick={handleSignOut} className="h-8 w-8 sm:h-10 sm:w-10">
+                  <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
+                </Button>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link to="/login">
+                  <Button variant="ghost" size="sm">Login</Button>
+                </Link>
+                <Link to="/signup">
+                  <Button size="sm" className="roomyfy-gradient text-primary-foreground">Sign Up</Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </header>

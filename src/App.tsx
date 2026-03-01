@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
-import ProtectedRoute from "@/components/ProtectedRoute";
+
 import Landing from "./pages/Landing";
 
 // Lazy load non-critical routes to reduce initial bundle size
@@ -39,9 +39,9 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/reviews" element={<Reviews />} />
-              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-              <Route path="/design/new" element={<ProtectedRoute><NewDesign /></ProtectedRoute>} />
-              <Route path="/design/:id" element={<ProtectedRoute><DesignResult /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/design/new" element={<NewDesign />} />
+              <Route path="/design/:id" element={<DesignResult />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
