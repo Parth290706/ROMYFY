@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
+
 import { supabase } from '@/integrations/supabase/client';
 import { Home, Plus, LogOut, Sparkles, Clock, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -25,7 +25,8 @@ interface DesignWithSignedUrls extends RoomDesign {
 }
 
 const Dashboard = () => {
-  const { user, signOut } = useAuth();
+  const user = null as any; // Auth removed — will be added later
+  const signOut = async () => {};
   const navigate = useNavigate();
   const { toast } = useToast();
   const [designs, setDesigns] = useState<DesignWithSignedUrls[]>([]);

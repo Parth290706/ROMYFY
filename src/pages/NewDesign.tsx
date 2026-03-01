@@ -9,7 +9,7 @@ import StepProcessing from '@/components/design/StepProcessing';
 import DesignHeader from '@/components/design/DesignHeader';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+
 
 export interface DesignData {
   roomType: string;
@@ -24,7 +24,7 @@ export interface DesignData {
 const NewDesign = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const user = null as any; // Auth removed — will be added later
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [designData, setDesignData] = useState<DesignData>({

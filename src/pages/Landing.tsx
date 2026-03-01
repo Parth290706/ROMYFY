@@ -16,10 +16,7 @@ const Landing = () => {
             <span className="text-lg sm:text-xl font-bold roomyfy-text-gradient">ROOMYFY</span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-4">
-            <Link to="/login">
-              <Button variant="ghost" size="sm" className="text-foreground hover:text-primary px-2 sm:px-4">Login</Button>
-            </Link>
-            <Link to="/signup">
+            <Link to="/design/new">
               <Button size="sm" className="roomyfy-gradient text-primary-foreground font-semibold px-3 sm:px-4">
                 <span className="hidden sm:inline">Get Started</span>
                 <span className="sm:hidden">Start</span>
