@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+
 import { useToast } from '@/hooks/use-toast';
 import { Home, Star, Send, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -20,7 +20,7 @@ interface Review {
 }
 
 const Reviews = () => {
-  const { user } = useAuth();
+  const user = null; // Auth removed — will be added later
   const { toast } = useToast();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
