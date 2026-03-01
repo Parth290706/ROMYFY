@@ -56,7 +56,16 @@ const NewDesign = () => {
   };
 
   const handleSubmit = async () => {
-    if (!user || !designData.imageFile) return;
+    if (!designData.imageFile) return;
+
+    if (!user) {
+      toast({
+        title: 'Login required',
+        description: 'Please sign in or create an account to save your design.',
+      });
+      navigate('/login');
+      return;
+    }
 
     setIsProcessing(true);
 
