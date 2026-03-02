@@ -3,9 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { Home, Plus, Sparkles, Clock, Trash2 } from 'lucide-react';
+import { Home, Plus, Sparkles, Clock, Trash2, LogIn, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface RoomDesign {
   id: string;
@@ -26,6 +27,7 @@ interface DesignWithSignedUrls extends RoomDesign {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, signOut } = useAuth();
   const [designs, setDesigns] = useState<DesignWithSignedUrls[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -111,6 +113,17 @@ const Dashboard = () => {
                 <Plus className="mr-1 h-4 w-4" /> New Design
               </Button>
             </Link>
+            {user ? (
+              <Button variant="outline" size="sm" onClick={() => signOut()}>
+                <LogOut className="mr-1 h-4 w-4" /> Sign Out
+              </Button>
+            ) : (
+              <Link to="/login">
+                <Button variant="outline" size="sm">
+                  <LogIn className="mr-1 h-4 w-4" /> Login
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </header>
