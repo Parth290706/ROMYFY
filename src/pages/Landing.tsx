@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Sparkles, Home, Palette, Zap, Star } from 'lucide-react';
+import { ArrowRight, Sparkles, Home, Palette, Zap, Star, LogIn, UserPlus } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthContext';
 import logo from '@/assets/logo.png';
 
 const Landing = () => {
+  const { user, signOut } = useAuth();
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
@@ -15,14 +17,30 @@ const Landing = () => {
             <img src={logo} alt="ROOMYFY Logo" className="h-10 w-10 sm:h-12 sm:w-12 rounded-full" width={48} height={48} loading="eager" decoding="async" />
             <span className="text-lg sm:text-xl font-bold roomyfy-text-gradient">ROOMYFY</span>
           </Link>
-          <div className="flex items-center gap-2 sm:gap-4">
-            <Link to="/design/new">
-              <Button size="sm" className="roomyfy-gradient text-primary-foreground font-semibold px-3 sm:px-4">
-                <span className="hidden sm:inline">Get Started</span>
-                <span className="sm:hidden">Start</span>
-                <ArrowRight className="ml-1 sm:ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+          <div className="flex items-center gap-2 sm:gap-3">
+            {user ? (
+              <>
+                <Link to="/dashboard">
+                  <Button variant="ghost" size="sm" className="text-sm">Dashboard</Button>
+                </Link>
+                <Button variant="outline" size="sm" className="text-sm" onClick={() => signOut()}>
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost" size="sm" className="text-sm gap-1">
+                    <LogIn className="h-4 w-4" /> Login
+                  </Button>
+                </Link>
+                <Link to="/signup">
+                  <Button size="sm" className="roomyfy-gradient text-primary-foreground text-sm gap-1">
+                    <UserPlus className="h-4 w-4" /> Sign Up
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </nav>
       </header>

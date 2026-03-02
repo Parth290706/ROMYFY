@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { Home, ArrowLeft, Download, Sparkles, Clock, RefreshCw } from 'lucide-react';
+import { Home, ArrowLeft, Download, Sparkles, Clock, RefreshCw, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import ShareDesignButton from '@/components/ShareDesignButton';
@@ -196,6 +196,7 @@ const DesignResult = () => {
   }
 
   const isProcessing = design.status === 'processing' || design.status === 'pending';
+  const isFailed = design.status === 'failed';
 
   return (
     <div className="min-h-screen bg-background">
@@ -270,6 +271,48 @@ const DesignResult = () => {
                 </div>
               </CardContent>
             </Card>
+          ) : isFailed ? (
+            /* Failed State with prominent retry */
+            <div className="space-y-6 mb-6 sm:mb-8">
+              <Card className="border-destructive/30">
+                <CardContent className="p-8 sm:p-12 text-center">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-xl sm:rounded-2xl bg-destructive/10 flex items-center justify-center">
+                    <AlertTriangle className="h-8 w-8 sm:h-10 sm:w-10 text-destructive" />
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-semibold mb-2">Image Generation Failed</h2>
+                  <p className="text-sm sm:text-base text-muted-foreground mb-6">
+                    Something went wrong during generation. You can retry and we'll try again.
+                  </p>
+                  <Button
+                    onClick={handleRetryGeneration}
+                    disabled={retrying}
+                    className="roomyfy-gradient text-primary-foreground px-8"
+                    size="lg"
+                  >
+                    <RefreshCw className={"mr-2 h-5 w-5" + (retrying ? " animate-spin" : "")} />
+                    {retrying ? 'Retrying…' : 'Retry Generation'}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Still show original image */}
+              <Card className="overflow-hidden roomyfy-card-shadow">
+                <CardContent className="p-0">
+                  <div className="p-3 sm:p-4 bg-muted/50">
+                    <h3 className="font-semibold text-sm sm:text-base">Your Original Photo</h3>
+                  </div>
+                  <div className="aspect-[4/3]">
+                    {signedUrls.originalSignedUrl ? (
+                      <img src={signedUrls.originalSignedUrl} alt="Original room" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <p className="text-sm text-muted-foreground">Loading image...</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           ) : (
             /* Before/After Comparison */
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
@@ -280,11 +323,7 @@ const DesignResult = () => {
                   </div>
                   <div className="aspect-[4/3]">
                     {signedUrls.originalSignedUrl ? (
-                      <img
-                        src={signedUrls.originalSignedUrl}
-                        alt="Original room"
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={signedUrls.originalSignedUrl} alt="Original room" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-muted flex items-center justify-center">
                         <p className="text-sm text-muted-foreground">Loading image...</p>
@@ -302,14 +341,10 @@ const DesignResult = () => {
                   </div>
                   <div className="aspect-[4/3]">
                     {signedUrls.generatedSignedUrl ? (
-                      <img
-                        src={signedUrls.generatedSignedUrl}
-                        alt="AI generated design"
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={signedUrls.generatedSignedUrl} alt="AI generated design" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-muted flex items-center justify-center">
-                        <p className="text-sm text-muted-foreground">Image generation failed</p>
+                        <p className="text-sm text-muted-foreground">No generated image</p>
                       </div>
                     )}
                   </div>

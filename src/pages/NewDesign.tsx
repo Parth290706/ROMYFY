@@ -9,6 +9,7 @@ import StepProcessing from '@/components/design/StepProcessing';
 import DesignHeader from '@/components/design/DesignHeader';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 export interface DesignData {
@@ -24,6 +25,7 @@ export interface DesignData {
 const NewDesign = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -62,9 +64,10 @@ const NewDesign = () => {
 
     try {
       // Upload original image to storage
-      const guestId = `guest_${Date.now()}`;
+      // Use authenticated user ID if available, otherwise guest ID
+      const userId = user?.id ?? `guest_${Date.now()}`;
       const fileExt = designData.imageFile.name.split('.').pop();
-      const fileName = `${guestId}/${Date.now()}.${fileExt}`;
+      const fileName = `${userId}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('room-images')
@@ -83,7 +86,7 @@ const NewDesign = () => {
       const { data: design, error: insertError } = await supabase
         .from('room_designs')
         .insert({
-          user_id: guestId,
+          user_id: userId,
           room_type: designData.roomType,
           style_mood: designData.styleMood,
           style_type: designData.styleType,
