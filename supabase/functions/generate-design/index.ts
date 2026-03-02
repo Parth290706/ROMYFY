@@ -60,27 +60,7 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error("Supabase configuration missing");
 
-    // Authentication check
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Create authenticated client to verify user
-    const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // No authentication required - public access
 
     // Validate input
     const body = await req.json();
@@ -103,8 +83,11 @@ serve(async (req) => {
       ? customPrompt
       : `${styleMood} mood with ${styleType} design style`;
 
-    // Verify ownership of the design
-    const { data: design, error: designError } = await supabaseAuth
+    // Verify design exists (no ownership check - public access)
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY!);
+    adminClient = supabase;
+
+    const { data: design, error: designError } = await supabase
       .from("room_designs")
       .select("user_id")
       .eq("id", designId)
@@ -116,17 +99,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    if (design.user_id !== user.id) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Use service role client for admin operations (after ownership verified)
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY!);
-    adminClient = supabase;
 
     const setDesignFailed = async (reason: string, suggestionsOverride?: string) => {
       if (!adminClient || !designIdForError) return;
@@ -168,12 +140,12 @@ serve(async (req) => {
       );
     };
 
-    // Rate limiting: Check requests in last hour (max 10 per hour)
+    // Rate limiting: Check requests in last hour (max 10 per hour per guest)
     const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
     const { count: requestCount } = await supabase
       .from("room_designs")
       .select("*", { count: "exact", head: true })
-      .eq("user_id", user.id)
+      .eq("user_id", design.user_id)
       .gte("created_at", oneHourAgo);
 
     if (requestCount && requestCount >= 10) {
@@ -314,7 +286,7 @@ serve(async (req) => {
     let generatedImageUrl: string | null = null;
 
     if (imageDataUrl) {
-      const fileName = `${user.id}/generated-${designId}.png`;
+      const fileName = `${design.user_id}/generated-${designId}.png`;
 
       let imageBuffer: Uint8Array | null = null;
       let contentType = "image/png";
