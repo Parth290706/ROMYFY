@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isAnonymous: boolean;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -26,15 +27,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
     });
 
-    // Get initial session
+    // Get initial session, sign in anonymously if no session exists
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setLoading(false);
+      if (!session) {
+        // Auto sign-in anonymously so every visitor gets a real auth.uid()
+        supabase.auth.signInAnonymously().then(({ data }) => {
+          if (data?.session) {
+            setSession(data.session);
+            setUser(data.session.user ?? null);
+          }
+          setLoading(false);
+        });
+      } else {
+        setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const isAnonymous = user?.is_anonymous === true;
 
   const signUp = async (email: string, password: string, fullName?: string) => {
     const { error } = await supabase.auth.signUp({
@@ -55,10 +69,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    // After signing out, sign in anonymously again so the app keeps working
+    await supabase.auth.signInAnonymously();
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAnonymous, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

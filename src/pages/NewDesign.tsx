@@ -63,9 +63,11 @@ const NewDesign = () => {
     setIsProcessing(true);
 
     try {
-      // Upload original image to storage
-      // Use authenticated user ID if available, otherwise guest ID
-      const userId = user?.id ?? `guest_${Date.now()}`;
+      // Use authenticated user ID (anonymous auth ensures user always exists)
+      if (!user?.id) {
+        throw new Error('No authenticated session');
+      }
+      const userId = user.id;
       const fileExt = designData.imageFile.name.split('.').pop();
       const fileName = `${userId}/${Date.now()}.${fileExt}`;
       

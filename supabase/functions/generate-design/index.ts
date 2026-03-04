@@ -60,19 +60,27 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error("Supabase configuration missing");
 
-    // Optional JWT authentication - validate if present
-    let authenticatedUserId: string | null = null;
+    // JWT authentication REQUIRED - validate token
     const authHeader = req.headers.get("Authorization");
-    if (authHeader?.startsWith("Bearer ")) {
-      const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        global: { headers: { Authorization: authHeader } },
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-      const token = authHeader.replace("Bearer ", "");
-      const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
-      if (!claimsError && claimsData?.claims?.sub) {
-        authenticatedUserId = claimsData.claims.sub as string;
-      }
     }
+
+    const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const authenticatedUserId = claimsData.claims.sub as string;
 
     // Validate input
     const body = await req.json();
@@ -101,7 +109,7 @@ serve(async (req) => {
 
     const { data: design, error: designError } = await supabase
       .from("room_designs")
-      .select("user_id")
+      .select("user_id, generation_count")
       .eq("id", designId)
       .single();
 
@@ -112,18 +120,20 @@ serve(async (req) => {
       });
     }
 
-    // Ownership check: authenticated users must own the design, guests must match guest_ prefix
-    if (authenticatedUserId) {
-      if (design.user_id !== authenticatedUserId) {
-        return new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-    } else if (!design.user_id.startsWith("guest_")) {
-      // Unauthenticated request for a non-guest design
-      return new Response(JSON.stringify({ error: "Authentication required" }), {
-        status: 401,
+    // Ownership check: authenticated user must own the design
+    if (design.user_id !== authenticatedUserId) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Per-design generation limit (max 5 attempts per design)
+    if (design.generation_count >= 5) {
+      return new Response(JSON.stringify({
+        error: "Maximum generation attempts reached for this design. Please create a new design.",
+      }), {
+        status: 429,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -168,16 +178,15 @@ serve(async (req) => {
       );
     };
 
-    // Rate limiting: stricter for guests (5/hour), relaxed for auth users (15/hour)
-    const maxRequests = authenticatedUserId ? 15 : 5;
+    // Rate limiting: 15 generations per user per hour
     const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
     const { count: requestCount } = await supabase
       .from("room_designs")
       .select("*", { count: "exact", head: true })
-      .eq("user_id", design.user_id)
+      .eq("user_id", authenticatedUserId)
       .gte("created_at", oneHourAgo);
 
-    if (requestCount && requestCount >= maxRequests) {
+    if (requestCount && requestCount >= 15) {
       return new Response(JSON.stringify({
         error: "Rate limit exceeded. Please try again later.",
       }), {
@@ -185,6 +194,12 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "3600" },
       });
     }
+
+    // Increment generation count for this design
+    await supabase
+      .from("room_designs")
+      .update({ generation_count: (design.generation_count || 0) + 1 })
+      .eq("id", designId);
 
     // Mark as processing (best effort) so results page can show live state
     await supabase

@@ -60,13 +60,23 @@ const Reviews = () => {
 
     setSubmitting(true);
 
-    const userId = user?.id ?? `guest_${Date.now()}`;
-    const userName = user?.user_metadata?.full_name || 'Guest';
+    if (!user?.id) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No authenticated session. Please refresh the page.',
+      });
+      setSubmitting(false);
+      return;
+    }
+
+    const userId = user.id;
+    const userName = user.is_anonymous ? 'Guest' : (user.user_metadata?.full_name || 'User');
 
     const { error } = await supabase.from('reviews').insert({
       user_id: userId,
       rating,
-      review_text: reviewText.trim(),
+      review_text: reviewText.trim().slice(0, 2000),
       user_name: userName,
     });
 

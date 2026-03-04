@@ -74,6 +74,7 @@ export type Database = {
           budget: string
           created_at: string
           generated_image_url: string | null
+          generation_count: number
           id: string
           original_image_url: string
           room_type: string
@@ -88,6 +89,7 @@ export type Database = {
           budget: string
           created_at?: string
           generated_image_url?: string | null
+          generation_count?: number
           id?: string
           original_image_url: string
           room_type: string
@@ -102,6 +104,7 @@ export type Database = {
           budget?: string
           created_at?: string
           generated_image_url?: string | null
+          generation_count?: number
           id?: string
           original_image_url?: string
           room_type?: string
