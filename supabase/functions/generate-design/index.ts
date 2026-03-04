@@ -178,16 +178,15 @@ serve(async (req) => {
       );
     };
 
-    // Rate limiting: stricter for guests (5/hour), relaxed for auth users (15/hour)
-    const maxRequests = authenticatedUserId ? 15 : 5;
+    // Rate limiting: 15 generations per user per hour
     const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
     const { count: requestCount } = await supabase
       .from("room_designs")
       .select("*", { count: "exact", head: true })
-      .eq("user_id", design.user_id)
+      .eq("user_id", authenticatedUserId)
       .gte("created_at", oneHourAgo);
 
-    if (requestCount && requestCount >= maxRequests) {
+    if (requestCount && requestCount >= 15) {
       return new Response(JSON.stringify({
         error: "Rate limit exceeded. Please try again later.",
       }), {
@@ -195,6 +194,12 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "3600" },
       });
     }
+
+    // Increment generation count for this design
+    await supabase
+      .from("room_designs")
+      .update({ generation_count: (design.generation_count || 0) + 1 })
+      .eq("id", designId);
 
     // Mark as processing (best effort) so results page can show live state
     await supabase
