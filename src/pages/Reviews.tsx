@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 import { useToast } from '@/hooks/use-toast';
 import { Home, Star, Send, Loader2 } from 'lucide-react';
@@ -21,6 +22,7 @@ interface Review {
 
 const Reviews = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -58,10 +60,11 @@ const Reviews = () => {
 
     setSubmitting(true);
 
-    const userName = 'Guest';
+    const userId = user?.id ?? `guest_${Date.now()}`;
+    const userName = user?.user_metadata?.full_name || 'Guest';
 
     const { error } = await supabase.from('reviews').insert({
-      user_id: `guest_${Date.now()}`,
+      user_id: userId,
       rating,
       review_text: reviewText.trim(),
       user_name: userName,

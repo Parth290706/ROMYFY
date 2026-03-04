@@ -32,13 +32,20 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDesigns();
-  }, []);
+    if (user) {
+      fetchDesigns();
+    } else {
+      setDesigns([]);
+      setLoading(false);
+    }
+  }, [user]);
 
   const fetchDesigns = async () => {
+    if (!user) return;
     const { data, error } = await supabase
       .from('room_designs')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
