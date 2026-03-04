@@ -60,7 +60,19 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error("Supabase configuration missing");
 
-    // No authentication required - public access
+    // Optional JWT authentication - validate if present
+    let authenticatedUserId: string | null = null;
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
+      if (!claimsError && claimsData?.claims?.sub) {
+        authenticatedUserId = claimsData.claims.sub as string;
+      }
+    }
 
     // Validate input
     const body = await req.json();
@@ -83,7 +95,7 @@ serve(async (req) => {
       ? customPrompt
       : `${styleMood} mood with ${styleType} design style`;
 
-    // Verify design exists (no ownership check - public access)
+    // Verify design exists and check ownership
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY!);
     adminClient = supabase;
 
@@ -96,6 +108,22 @@ serve(async (req) => {
     if (designError || !design) {
       return new Response(JSON.stringify({ error: "Design not found" }), {
         status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Ownership check: authenticated users must own the design, guests must match guest_ prefix
+    if (authenticatedUserId) {
+      if (design.user_id !== authenticatedUserId) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } else if (!design.user_id.startsWith("guest_")) {
+      // Unauthenticated request for a non-guest design
+      return new Response(JSON.stringify({ error: "Authentication required" }), {
+        status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -140,7 +168,8 @@ serve(async (req) => {
       );
     };
 
-    // Rate limiting: Check requests in last hour (max 10 per hour per guest)
+    // Rate limiting: stricter for guests (5/hour), relaxed for auth users (15/hour)
+    const maxRequests = authenticatedUserId ? 15 : 5;
     const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
     const { count: requestCount } = await supabase
       .from("room_designs")
@@ -148,7 +177,7 @@ serve(async (req) => {
       .eq("user_id", design.user_id)
       .gte("created_at", oneHourAgo);
 
-    if (requestCount && requestCount >= 10) {
+    if (requestCount && requestCount >= maxRequests) {
       return new Response(JSON.stringify({
         error: "Rate limit exceeded. Please try again later.",
       }), {
