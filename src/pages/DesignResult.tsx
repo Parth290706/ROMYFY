@@ -136,18 +136,9 @@ const DesignResult = () => {
     try {
       setRetrying(true);
 
-      const { data: signed, error: signedErr } = await supabase.storage
-        .from('room-images')
-        .createSignedUrl(design.original_image_url, 3600);
-
-      if (signedErr || !signed?.signedUrl) {
-        throw signedErr || new Error('Could not access original image');
-      }
-
       const { data: fnData, error: fnErr } = await supabase.functions.invoke('generate-design', {
         body: {
           designId: design.id,
-          imageUrl: signed.signedUrl,
           roomType: design.room_type,
           styleMood: design.style_mood,
           styleType: design.style_type,

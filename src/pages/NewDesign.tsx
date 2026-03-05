@@ -77,13 +77,6 @@ const NewDesign = () => {
 
       if (uploadError) throw uploadError;
 
-      // Create signed URL for the AI to access (1 hour expiry)
-      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-        .from('room-images')
-        .createSignedUrl(fileName, 3600);
-
-      if (signedUrlError) throw signedUrlError;
-
       // Create design record - store the path, not the URL
       const { data: design, error: insertError } = await supabase
         .from('room_designs')
@@ -101,11 +94,10 @@ const NewDesign = () => {
 
       if (insertError) throw insertError;
 
-      // Call AI edge function with signed URL
+      // Call AI edge function (image downloaded server-side from private bucket)
       const { data: aiResult, error: aiError } = await supabase.functions.invoke('generate-design', {
         body: {
           designId: design.id,
-          imageUrl: signedUrlData.signedUrl, // Use signed URL for AI access
           roomType: designData.roomType,
           styleMood: designData.styleMood,
           styleType: designData.styleType,
