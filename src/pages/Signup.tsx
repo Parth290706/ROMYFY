@@ -29,17 +29,22 @@ const Signup = () => {
     }
 
     setLoading(true);
-    const { error } = await signUp(email, password, fullName);
-    setLoading(false);
-
-    if (error) {
-      toast({ variant: 'destructive', title: 'Signup failed', description: error.message });
-    } else {
-      toast({
-        title: 'Check your email',
-        description: 'We sent you a verification link. Please verify your email to sign in.',
-      });
-      navigate('/login');
+    try {
+      // Sign out anonymous session first to avoid conflicts
+      await supabase.auth.signOut();
+      const { error } = await signUp(email, password, fullName);
+      if (error) {
+        // Re-establish anonymous session on failure
+        await supabase.auth.signInAnonymously();
+        toast({ variant: 'destructive', title: 'Signup failed', description: error.message });
+      } else {
+        toast({ title: 'Account created!', description: 'You are now signed in.' });
+        navigate('/dashboard');
+      }
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Signup failed', description: err?.message || 'Unknown error' });
+    } finally {
+      setLoading(false);
     }
   };
 
