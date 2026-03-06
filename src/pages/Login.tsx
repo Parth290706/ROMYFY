@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,18 +24,22 @@ const Login = () => {
     if (!email || !password) return;
 
     setLoading(true);
-    const { error } = await signIn(email, password);
-    setLoading(false);
-
-    if (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Login failed',
-        description: error.message,
-      });
-    } else {
-      toast({ title: 'Welcome back!' });
-      navigate('/dashboard');
+    try {
+      // Sign out anonymous session first to avoid conflicts
+      await supabase.auth.signOut();
+      const { error } = await signIn(email, password);
+      if (error) {
+        // Re-establish anonymous session on failure
+        await supabase.auth.signInAnonymously();
+        toast({ variant: 'destructive', title: 'Login failed', description: error.message });
+      } else {
+        toast({ title: 'Welcome back!' });
+        navigate('/dashboard');
+      }
+    } catch (err: any) {
+      toast({ variant: 'destructive', title: 'Login failed', description: err?.message || 'Unknown error' });
+    } finally {
+      setLoading(false);
     }
   };
 
