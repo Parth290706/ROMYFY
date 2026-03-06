@@ -32,7 +32,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (!session) {
-        // Auto sign-in anonymously so every visitor gets a real auth.uid()
         supabase.auth.signInAnonymously().then(({ data }) => {
           if (data?.session) {
             setSession(data.session);
@@ -51,6 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isAnonymous = user?.is_anonymous === true;
 
   const signUp = async (email: string, password: string, fullName?: string) => {
+    // Call signUp directly – Supabase replaces the anonymous session automatically
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -63,6 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
+    // Call signIn directly – Supabase replaces the anonymous session automatically
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error as Error | null };
   };

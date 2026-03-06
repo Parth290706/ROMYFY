@@ -120,8 +120,8 @@ const Dashboard = () => {
                 <Plus className="mr-1 h-4 w-4" /> New Design
               </Button>
             </Link>
-            {user ? (
-              <Button variant="outline" size="sm" onClick={() => signOut()}>
+            {user && !user.is_anonymous ? (
+              <Button variant="outline" size="sm" onClick={async () => { await signOut(); navigate('/'); }}>
                 <LogOut className="mr-1 h-4 w-4" /> Sign Out
               </Button>
             ) : (
