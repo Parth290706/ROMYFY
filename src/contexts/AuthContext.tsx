@@ -6,10 +6,11 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  isAnonymous: boolean;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  updatePassword: (password: string) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,37 +21,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener BEFORE getting session
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    // Get initial session, sign in anonymously if no session exists
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      if (!session) {
-        supabase.auth.signInAnonymously().then(({ data }) => {
-          if (data?.session) {
-            setSession(data.session);
-            setUser(data.session.user ?? null);
-          }
-          setLoading(false);
-        });
-      } else {
-        setLoading(false);
-      }
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const isAnonymous = user?.is_anonymous === true;
-
   const signUp = async (email: string, password: string, fullName?: string) => {
-    // Call signUp directly – Supabase replaces the anonymous session automatically
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -63,19 +49,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
-    // Call signIn directly – Supabase replaces the anonymous session automatically
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error as Error | null };
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    // After signing out, sign in anonymously again so the app keeps working
-    await supabase.auth.signInAnonymously();
+  };
+
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    return { error: error as Error | null };
+  };
+
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    return { error: error as Error | null };
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAnonymous, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signUp, signIn, signOut, resetPassword, updatePassword }}>
       {children}
     </AuthContext.Provider>
   );

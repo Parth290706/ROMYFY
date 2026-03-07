@@ -59,18 +59,19 @@ const Signup = () => {
         <Card className="roomyfy-card-shadow roomyfy-border-glow">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Create Account</CardTitle>
-            <CardDescription>Sign up to save and manage your designs</CardDescription>
+            <CardDescription>Sign up to start designing your rooms</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name (optional)</Label>
+                <Label htmlFor="fullName">Full Name</Label>
                 <Input
                   id="fullName"
                   type="text"
                   placeholder="John Doe"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -110,16 +111,13 @@ const Signup = () => {
                 {loading ? 'Creating account…' : 'Create Account'}
               </Button>
             </form>
-            <div className="mt-6 text-center space-y-2">
+            <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Already have an account?{' '}
                 <Link to="/login" className="text-primary hover:underline font-medium">
                   Sign In
                 </Link>
               </p>
-              <Link to="/design/new" className="text-sm text-muted-foreground hover:text-foreground block">
-                Or continue as guest →
-              </Link>
             </div>
           </CardContent>
         </Card>

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { Home, Plus, Sparkles, Clock, Trash2, LogIn, LogOut } from 'lucide-react';
+import { Home, Plus, Sparkles, Clock, Trash2, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -104,6 +104,11 @@ const Dashboard = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-card border-b sticky top-0 z-50">
@@ -120,17 +125,9 @@ const Dashboard = () => {
                 <Plus className="mr-1 h-4 w-4" /> New Design
               </Button>
             </Link>
-            {user && !user.is_anonymous ? (
-              <Button variant="outline" size="sm" onClick={async () => { await signOut(); navigate('/'); }}>
-                <LogOut className="mr-1 h-4 w-4" /> Sign Out
-              </Button>
-            ) : (
-              <Link to="/login">
-                <Button variant="outline" size="sm">
-                  <LogIn className="mr-1 h-4 w-4" /> Login
-                </Button>
-              </Link>
-            )}
+            <Button variant="outline" size="sm" onClick={handleSignOut}>
+              <LogOut className="mr-1 h-4 w-4" /> Sign Out
+            </Button>
           </div>
         </div>
       </header>
@@ -141,7 +138,7 @@ const Dashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-6 sm:mb-8"
         >
-          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Welcome!</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Welcome, {user?.user_metadata?.full_name || 'Designer'}!</h1>
           <p className="text-sm sm:text-base text-muted-foreground">Ready to design your next dream space?</p>
         </motion.div>
 
@@ -215,7 +212,7 @@ const Dashboard = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <Card className="overflow-hidden roomyfy-card-shadow hover:shadow-lg transition-shadow group">
+                  <Card className="overflow-hidden roomyfy-card-shadow hover:shadow-lg transition-shadow group cursor-pointer" onClick={() => navigate(`/design/${design.id}`)}>
                     <div className="aspect-[4/3] bg-muted relative">
                       {design.generatedSignedUrl ? (
                         <img src={design.generatedSignedUrl} alt="Generated design" className="w-full h-full object-cover" />
@@ -231,7 +228,7 @@ const Dashboard = () => {
                         </div>
                       )}
                       <button
-                        onClick={() => handleDeleteDesign(design.id)}
+                        onClick={(e) => { e.stopPropagation(); handleDeleteDesign(design.id); }}
                         className="absolute top-2 right-2 p-2 bg-destructive text-destructive-foreground rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <Trash2 className="h-4 w-4" />

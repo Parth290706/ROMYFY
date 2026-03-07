@@ -1,12 +1,13 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Sparkles, Home, Palette, Zap, Star, LogIn, UserPlus } from 'lucide-react';
+import { ArrowRight, Sparkles, Home, Palette, Zap, Star, LogIn, UserPlus, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import logo from '@/assets/logo.png';
 
 const Landing = () => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
@@ -23,8 +24,8 @@ const Landing = () => {
                 <Link to="/dashboard">
                   <Button variant="ghost" size="sm" className="text-sm">Dashboard</Button>
                 </Link>
-                <Button variant="outline" size="sm" className="text-sm" onClick={() => signOut()}>
-                  Sign Out
+                <Button variant="outline" size="sm" className="text-sm gap-1" onClick={async () => { await signOut(); navigate('/login'); }}>
+                  <LogOut className="h-4 w-4" /> Sign Out
                 </Button>
               </>
             ) : (
