@@ -24,8 +24,8 @@ const Landing = () => {
                 <Link to="/dashboard">
                   <Button variant="ghost" size="sm" className="text-sm">Dashboard</Button>
                 </Link>
-                <Button variant="outline" size="sm" className="text-sm" onClick={() => signOut()}>
-                  Sign Out
+                <Button variant="outline" size="sm" className="text-sm gap-1" onClick={async () => { await signOut(); navigate('/login'); }}>
+                  <LogOut className="h-4 w-4" /> Sign Out
                 </Button>
               </>
             ) : (
