@@ -100,18 +100,19 @@ serve(async (req) => {
       });
     }
 
-    // Validate the JWT by calling getUser with the token
+    // Validate the JWT using getClaims
     const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: userData, error: userError } = await anonClient.auth.getUser();
-    if (userError || !userData?.user?.id) {
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const authenticatedUserId = userData.user.id;
+    const authenticatedUserId = claimsData.claims.sub as string;
 
     // Validate input (imageUrl no longer needed - we download server-side)
     const body = await req.json();
@@ -253,7 +254,7 @@ serve(async (req) => {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
+        model: "google/gemini-3-pro-image-preview",
         messages: [
           {
             role: "user",
