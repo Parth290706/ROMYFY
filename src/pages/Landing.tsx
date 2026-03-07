@@ -1,13 +1,13 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Sparkles, Home, Palette, Zap, Star, LogIn, UserPlus } from 'lucide-react';
+import { ArrowRight, Sparkles, Home, Palette, Zap, Star, LogIn, UserPlus, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import logo from '@/assets/logo.png';
 
 const Landing = () => {
   const { user, signOut } = useAuth();
-  const navigate = (await import('react-router-dom')).useNavigate ? undefined : undefined;
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
