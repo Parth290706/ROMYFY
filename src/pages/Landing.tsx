@@ -7,6 +7,7 @@ import logo from '@/assets/logo.png';
 
 const Landing = () => {
   const { user, signOut } = useAuth();
+  const navigate = (await import('react-router-dom')).useNavigate ? undefined : undefined;
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
