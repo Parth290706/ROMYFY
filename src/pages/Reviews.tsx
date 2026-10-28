@@ -158,6 +158,25 @@ const Reviews = () => {
           </p>
         </motion.div>
 
+        {!authLoading && !user ? (
+          <Card className="roomyfy-card-shadow roomyfy-border-glow max-w-2xl mx-auto">
+            <CardContent className="p-8 text-center space-y-4">
+              <h2 className="text-xl sm:text-2xl font-semibold">Sign in to see reviews</h2>
+              <p className="text-muted-foreground">
+                Reviews are visible to signed-in members. Sign in to read community reviews and share your own experience.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link to="/login">
+                  <Button className="roomyfy-gradient w-full sm:w-auto">Sign In</Button>
+                </Link>
+                <Link to="/signup">
+                  <Button variant="outline" className="w-full sm:w-auto">Create Account</Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+        <>
         {/* Submit Review Form */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
