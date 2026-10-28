@@ -22,7 +22,7 @@ interface Review {
 
 const Reviews = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -31,8 +31,12 @@ const Reviews = () => {
   const [hoveredStar, setHoveredStar] = useState(0);
 
   useEffect(() => {
-    fetchReviews();
-  }, []);
+    if (user) {
+      fetchReviews();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
 
   const fetchReviews = async () => {
     const { data, error } = await supabase
