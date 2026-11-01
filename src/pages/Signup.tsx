@@ -19,6 +19,23 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const friendlyError = (message: string) => {
+    const m = message.toLowerCase();
+    if (m.includes('already registered') || m.includes('already exists') || m.includes('user already')) {
+      return 'An account with this email already exists. Please sign in instead.';
+    }
+    if (m.includes('leaked') || m.includes('pwned')) {
+      return 'This password is not allowed because it appears in a list of leaked passwords. Please choose a different one.';
+    }
+    if (m.includes('rate limit') || m.includes('too many')) {
+      return 'Too many attempts. Please wait a few minutes and try again.';
+    }
+    if (m.includes('failed to fetch') || m.includes('network')) {
+      return 'Network problem. Please check your internet connection and try again.';
+    }
+    return message;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
@@ -29,14 +46,19 @@ const Signup = () => {
     }
 
     setLoading(true);
-    const { error } = await signUp(email, password, fullName);
+    let error: Error | null = null;
+    try {
+      ({ error } = await signUp(email, password, fullName));
+    } catch (err) {
+      error = err instanceof Error ? err : new Error('Something went wrong. Please try again.');
+    }
     setLoading(false);
 
     if (error) {
-      toast({ variant: 'destructive', title: 'Signup failed', description: error.message });
+      toast({ variant: 'destructive', title: 'Signup failed', description: friendlyError(error.message) });
     } else {
-      toast({ title: 'Account created!', description: 'You are now signed in.' });
-      navigate('/dashboard');
+      toast({ title: 'Account created!', description: 'Welcome to Roomyfy.' });
+      navigate('/dashboard', { replace: true });
     }
   };
 
