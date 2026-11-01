@@ -18,23 +18,41 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const friendlyError = (message: string) => {
+    const m = message.toLowerCase();
+    if (m.includes('invalid login credentials') || m.includes('invalid credentials')) {
+      return 'Email or password is incorrect. Please try again.';
+    }
+    if (m.includes('not confirmed')) {
+      return 'This account is not confirmed yet. Please contact support or sign up again.';
+    }
+    if (m.includes('rate limit') || m.includes('too many')) {
+      return 'Too many attempts. Please wait a few minutes and try again.';
+    }
+    if (m.includes('failed to fetch') || m.includes('network')) {
+      return 'Network problem. Please check your internet connection and try again.';
+    }
+    return message;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) return;
 
     setLoading(true);
-    const { error } = await signIn(email, password);
+    let error: Error | null = null;
+    try {
+      ({ error } = await signIn(email, password));
+    } catch (err) {
+      error = err instanceof Error ? err : new Error('Something went wrong. Please try again.');
+    }
     setLoading(false);
 
     if (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Login failed',
-        description: error.message,
-      });
+      toast({ variant: 'destructive', title: 'Login failed', description: friendlyError(error.message) });
     } else {
       toast({ title: 'Welcome back!' });
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     }
   };
 
